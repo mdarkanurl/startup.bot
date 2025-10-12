@@ -1,0 +1,29 @@
+{
+  "name": "startup.bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mdarkanurl/startup.bot.git"
+  },
+  "keywords": [],
+  "author": "Mohammad Arkan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mdarkanurl/startup.bot/issues"
+  },
+  "homepage": "https://github.com/mdarkanurl/startup.bot#readme",
+  "dependencies": {
+    "puppeteer": "^24.23.0",
+    "puppeteer-core": "^24.24.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
