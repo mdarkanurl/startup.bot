@@ -1,4 +1,4 @@
-import { integer, text, boolean, pgTable, uuid } from "drizzle-orm/pg-core";
+import { integer, text, PgArray, pgTable, uuid } from "drizzle-orm/pg-core";
 
 export const startup = pgTable("startup", {
   id: uuid("id").primaryKey(),
@@ -7,6 +7,6 @@ export const startup = pgTable("startup", {
   description: text("description").notNull(),
   VC_firm: text("VC_firm").notNull(),
   services: text("services").notNull(),
+  former_names: text("former_names").array().notNull(),
   foundedAt: text("foundedAt"),
-  Headquarters: text("Headquarters")
 });
