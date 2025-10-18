@@ -4,7 +4,7 @@
     "module": "commonjs",
     "rootDir": "./src",
     "outDir": "./dist",
-    "types": ["node", "jest"],
+    "types": ["node"],
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -14,5 +14,4 @@
     "allowJs": true,
     "checkJs": false
   },
-  "include": ["src/**/*", "__tests__/**/*.test.ts"]
 }
