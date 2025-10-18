@@ -1,5 +1,4 @@
 import { PlaywrightCrawler, Dataset } from 'crawlee';
-import fs from 'fs';
 
 // Helper: extract only visible text nodes from the page
 const extractVisibleText = async (page: any) => {
