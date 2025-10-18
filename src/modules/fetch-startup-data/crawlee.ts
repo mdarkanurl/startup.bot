@@ -1,8 +1,9 @@
 import { PlaywrightCrawler, Dataset } from 'crawlee';
+import { JSDOM } from 'jsdom';
+import { Readability } from '@mozilla/readability';
 
-// Helper: extract only visible text nodes from the page
+
 const extractVisibleText = async (page: any) => {
-
     return await page.evaluate(() => {
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null as any);
         const visibleTexts: string[] = [];
@@ -12,14 +13,12 @@ const extractVisibleText = async (page: any) => {
             if (!el) return false;
             const style = window.getComputedStyle(el);
             if (
-                style &&
-                (style.visibility === 'hidden' || style.display === 'none' ||
-                parseFloat(style.opacity || '1') === 0)
+                style.visibility === 'hidden' ||
+                style.display === 'none' ||
+                parseFloat(style.opacity || '1') === 0
             ) {
                 return false;
             }
-            
-            // size check
             const rect = el.getBoundingClientRect();
             if (rect.width === 0 && rect.height === 0) return false;
             return true;
@@ -30,20 +29,34 @@ const extractVisibleText = async (page: any) => {
             const text = node.nodeValue?.trim();
             if (!text) continue;
             if (!isVisible(node)) continue;
-
+            if (text.length < 30) continue;
             visibleTexts.push(text);
         }
 
-        return visibleTexts;
+        return visibleTexts.join(' ').replace(/\s+/g, ' ').trim();
     });
 };
 
 
-const startUrls = ['https://www.carribiz.com/'];
+const extractInformativeText = async (page: any) => {
+    const html = await page.content();
+    const dom = new JSDOM(html, { url: page.url() });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
 
+    if (!article) return null;
+
+    return {
+        title: article.title,
+        text: article.textContent?.replace(/\s+/g, ' ').trim(),
+        summary: article.excerpt,
+    };
+};
+
+
+const startUrls = ['https://speechify.com/'];
 
 const crawler = new PlaywrightCrawler({
-
     launchContext: {
         launchOptions: {
             headless: true,
@@ -55,27 +68,35 @@ const crawler = new PlaywrightCrawler({
     async requestHandler({ page, request, enqueueLinks, log }) {
         log.info(`Crawling: ${request.url}`);
 
-        // Wait for network + some content to render
         await page.waitForLoadState('networkidle');
 
         const title = await page.title();
-        const text = await extractVisibleText(page);
+        const metaDescription = await page
+            .$eval('meta[name="description"]', (m: any) => m?.getAttribute('content'))
+            .catch(() => null);
 
-        // Optionally extract meta description
-        const metaDescription = await page.$eval('meta[name="description"]', (m: any) => m?.getAttribute('content'),).catch(() => null);
+        const article = await extractInformativeText(page);
 
-        // Open or create a dataset for this startup
-        const startupDataset = await Dataset.open("CarriBiz");
+        const text = article?.text || (await extractVisibleText(page));
+        const finalTitle = article?.title || title;
+        const summary = article?.summary || metaDescription;
 
+        if (!text || text.split(' ').length < 50) {
+            log.info(`Skipping non-informative page: ${request.url}`);
+            return;
+        }
+
+        // Save to Dataset
+        const startupDataset = await Dataset.open('Speechify');
         await startupDataset.pushData({
             url: request.url,
-            title,
-            description: metaDescription,
+            title: finalTitle,
+            description: summary,
             text,
             crawledAt: new Date().toISOString(),
         });
 
-
+        // Enqueue internal links
         await enqueueLinks({
             selector: 'a[href]',
             transformRequestFunction: (req) => {
@@ -84,10 +105,11 @@ const crawler = new PlaywrightCrawler({
                     const startHost = new URL(startUrls[0]).hostname;
                     if (reqUrl.hostname !== startHost) return null;
                     if (!reqUrl.protocol.startsWith('http')) return null;
-                    if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname) return null;
+                    if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
+                        return null;
                     return req;
                 } catch (err) {
-                    console.error("Error from crawlee.ts", err);
+                    console.error('Error from link handler', err);
                     return null;
                 }
             },
@@ -101,5 +123,7 @@ const crawler = new PlaywrightCrawler({
 });
 
 (async () => {
+    console.log('🚀 Starting the informative content crawler...');
     await crawler.run(startUrls);
+    console.log('✅ Crawl finished.');
 })();
