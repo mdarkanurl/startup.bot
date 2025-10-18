@@ -2,3 +2,4 @@ node_modules
 storage
 .env
 test.ts
+startups.json
