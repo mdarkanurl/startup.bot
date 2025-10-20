@@ -2,6 +2,10 @@ import { PlaywrightCrawler, Dataset } from 'crawlee';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 
+const excludedPatterns = [
+    'privacy', 'terms', 'login', 'signup', 'register',
+    'contact', 'support', 'faq', 'cookie', 'policy',
+    'help', 'careers', 'jobs', 'apply', 'hire'];
 
 const extractVisibleText = async (page: any) => {
     return await page.evaluate(() => {
@@ -54,7 +58,7 @@ const extractInformativeText = async (page: any) => {
 };
 
 
-const startUrls = ['https://speechify.com/'];
+const startUrls = ['https://www.carribiz.com/'];
 
 const crawler = new PlaywrightCrawler({
     launchContext: {
@@ -87,7 +91,7 @@ const crawler = new PlaywrightCrawler({
         }
 
         // Save to Dataset
-        const startupDataset = await Dataset.open('Speechify');
+        const startupDataset = await Dataset.open('CarriBiz');
         await startupDataset.pushData({
             url: request.url,
             title: finalTitle,
@@ -103,14 +107,20 @@ const crawler = new PlaywrightCrawler({
                 try {
                     const reqUrl = new URL(req.url);
                     const startHost = new URL(startUrls[0]).hostname;
-                    if (reqUrl.hostname !== startHost) return null;
-                    if (!reqUrl.protocol.startsWith('http')) return null;
+                    if (reqUrl.hostname !== startHost) return false;
+                    if (!reqUrl.protocol.startsWith('http')) return false;
                     if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
-                        return null;
+                        return false;
+
+                    if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word))) {
+                        console.log('Skipping:', reqUrl.href);
+                        return false;
+                    }
+                    
                     return req;
                 } catch (err) {
                     console.error('Error from link handler', err);
-                    return null;
+                    return false;
                 }
             },
             globs: ['**/*'],
