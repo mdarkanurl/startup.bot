@@ -7,6 +7,6 @@ export const startup = pgTable("startup", {
   description: text("description").notNull(),
   VC_firm: text("VC_firm").notNull(),
   services: text("services").notNull(),
-  former_names: text("former_names").array().notNull(),
+  founder_names: text("founder_names").array().notNull(),
   foundedAt: text("foundedAt"),
 });
