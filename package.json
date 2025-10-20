@@ -25,6 +25,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.6",
     "jsdom": "^27.0.1",
+    "mongoose": "^8.19.1",
     "playwright": "^1.56.0",
     "puppeteer": "^24.23.0",
     "puppeteer-core": "^24.24.0"
