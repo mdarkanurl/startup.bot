@@ -2,6 +2,8 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { Startup } from "../../../interfaces/ycombinator-types";
+import { MongoDB } from "../../../database";
+const { Startup } = MongoDB;
 
 const filePath = path.join(__dirname, "startups.json");
 
@@ -45,6 +47,17 @@ const fetchYCombinatorStartups = async (data: any) => {
     for(let URL = 0; URL < URLs.length; URL++) {
       const startupsFromUrl = await data(URLs[URL]);
 
+      // Save the data to MongoDB
+      await Startup.create({
+        startupID: 60321487,
+        title: startupsFromUrl.name,
+        website: startupsFromUrl.website,
+        description: startupsFromUrl.description,
+        VC_firm: "YCombinator",
+        services: "",
+        founder_names: startupsFromUrl.former_names,
+        foundedAt: startupsFromUrl.foundedAt
+      });
       startups.push(...startupsFromUrl);
     }
 
