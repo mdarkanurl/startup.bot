@@ -1,6 +1,4 @@
-import { config } from "dotenv";
 import { drizzle } from 'drizzle-orm/neon-http';
+import { DATABASE_URL } from "../config";
 
-config({ path: "../config/.env" });
-
-export const db = drizzle(process.env.DATABASE_URL!);
+export const db = drizzle(DATABASE_URL);

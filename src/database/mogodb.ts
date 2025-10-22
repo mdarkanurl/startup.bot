@@ -1,9 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { config } from "dotenv";
-
-config({ path: "../config/.env" });
-
-const MONGODB_CONNECT_URL = process.env.MONGODB_CONNECT_URL || "mongodb://127.0.0.1:27017/test";
+import { MONGODB_CONNECT_URL } from "../config";
 
 const startupsSchema = new Schema({
     id: Schema.Types.UUID,
