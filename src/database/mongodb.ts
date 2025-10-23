@@ -11,7 +11,7 @@ const startupsSchema = new Schema({
     type: Number,
     unique: true
   },
-  title: String,
+  name: String,
   website: String,
   description: String,
   VC_firm: [String],
