@@ -1,7 +1,8 @@
-import { Startup, DBConnect } from "./mogodb";
+import { Startup } from "./mongodb";
+import { DBConnect } from "./mongodb-connect";
 
 const MongoDB = {
-    Startup,
+    StartupDB: Startup,
     DBConnect
 }
 
