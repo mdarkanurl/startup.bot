@@ -3,9 +3,10 @@ import fs from "fs";
 import path from "path";
 import { Startup } from "../../../interfaces/ycombinator-types";
 import { MongoDB } from "../../../database";
-const { StartupDB } = MongoDB;
 
 const filePath = path.join(__dirname, "startups.json");
+
+let set = new Set();
 
 // Return array of startups
 const startups = async (URL: string): Promise<Startup[]> => {
@@ -14,12 +15,13 @@ const startups = async (URL: string): Promise<Startup[]> => {
 
     for (let i = 0; i < response.data.length; i++) {
       startups.push({
-        id: response.data[i].id,
+        startupID: response.data[i].id,
         name: response.data[i].name,
         website: response.data[i].website,
         description: response.data[i].long_description,
         VC_firm: "YCombinator",
         services: undefined,
+        founder_names: undefined,
         foundedAt: response.data[i].launched_at
       });
     }
@@ -47,20 +49,19 @@ const fetchYCombinatorStartups = async (data: any) => {
     for(let URL = 0; URL < URLs.length; URL++) {
       const startupsFromUrl = await data(URLs[URL]);
 
-      // Save the data to MongoDB
-      for(let startup of startupsFromUrl) {
-        await StartupDB.create({
-        startupID: startup.id,
-        title: startup.name,
-        website: startup.website,
-        description: startup.description,
-        VC_firm: "YCombinator",
-        services: "",
-        founder_names: startup.former_names,
-        foundedAt: startup.foundedAt
-      });
-      }
       startups.push(...startupsFromUrl);
+    }
+
+    // Save the data to MongoDB
+    try {
+      await MongoDB.StartupDB.insertMany(startups, { ordered: false });
+      console.log("✅ Inserted successfully (duplicates skipped)");
+    } catch (err: any) {
+      if (err.writeErrors) {
+        console.log(`⚠️ ${err.writeErrors.length} duplicates ignored`);
+      } else {
+        console.error(err);
+      }
     }
 
     // Write to JSON file
@@ -72,3 +73,8 @@ const fetchYCombinatorStartups = async (data: any) => {
 };
 
 fetchYCombinatorStartups(startups);
+
+export {
+  startups,
+  fetchYCombinatorStartups
+}
