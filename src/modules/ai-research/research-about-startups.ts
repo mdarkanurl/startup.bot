@@ -1,6 +1,9 @@
 import axios from "axios";
 import { Startups } from "../../interfaces/startups-types";
-import { API_FREE_LLM } from "../../config";
+import { config } from "dotenv";
+config();
+
+const API_FREE_LLM = process.env.API_FREE_LLM || "https://apifreellm.com/api/chat";
 
 const writeAboutStartups = async (data: Startups[]) => {
   try {
