@@ -3,3 +3,4 @@ storage
 .env
 test.ts
 startups.json
+dist
