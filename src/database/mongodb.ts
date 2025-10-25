@@ -17,7 +17,11 @@ const startupsSchema = new Schema({
   VC_firm: [String],
   services: String,
   founder_names: [String],
-  foundedAt: String
+  foundedAt: String,
+  isUsed: {
+    type: Boolean,
+    default: () => false
+  }
 }, { timestamps: true });
 
 const Startup = mongoose.model("Startup", startupsSchema);
