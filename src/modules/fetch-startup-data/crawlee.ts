@@ -1,11 +1,14 @@
 import { PlaywrightCrawler, Dataset } from 'crawlee';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
+import { Startup } from "../../database/mongodb";
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',
     'contact', 'support', 'faq', 'cookie', 'policy',
     'help', 'careers', 'jobs', 'apply', 'hire'];
+
+let startUrls: any[] | null | undefined = [];
 
 const extractVisibleText = async (page: any) => {
     return await page.evaluate(() => {
@@ -57,13 +60,34 @@ const extractInformativeText = async (page: any) => {
     };
 };
 
+// Fetch startup data from MongoDB
+const fetchDataFromMongoDB = async () => {
+    try {
+        const startup = await Startup.findOne();
+        console.log("Fetched startup from MongoDB:", startup);
+        if(!startup) return null;
 
-const startUrls = ['https://www.carribiz.com/'];
+        return [
+            {
+                url: startup.website || "",
+                userData: {
+                    VC_firm: startup.VC_firm,
+                    founder_names: startup.founder_names,
+                    name: startup.name,
+                    description: startup.description,
+                    foundedAt: startup.foundedAt
+                }
+            }
+        ];
+    } catch (error) {
+        console.error("Error from crawlee", error);
+    }
+}
 
 const crawler = new PlaywrightCrawler({
     launchContext: {
         launchOptions: {
-            headless: true,
+            headless: false,
         },
     },
 
@@ -72,7 +96,7 @@ const crawler = new PlaywrightCrawler({
     async requestHandler({ page, request, enqueueLinks, log }) {
         log.info(`Crawling: ${request.url}`);
 
-        await page.waitForLoadState('networkidle');
+        await page.waitForSelector('body', { timeout: 20000 });
 
         const title = await page.title();
         const metaDescription = await page
@@ -85,13 +109,13 @@ const crawler = new PlaywrightCrawler({
         const finalTitle = article?.title || title;
         const summary = article?.summary || metaDescription;
 
-        if (!text || text.split(' ').length < 50) {
-            log.info(`Skipping non-informative page: ${request.url}`);
-            return;
-        }
+        // if (!text || text.split(' ').length < 50) {
+        //     log.info(`Skipping non-informative page: ${request.url}`);
+        //     return;
+        // }
 
         // Save to Dataset
-        const startupDataset = await Dataset.open('CarriBiz');
+        const startupDataset = await Dataset.open('MixerBox');
         await startupDataset.pushData({
             url: request.url,
             title: finalTitle,
@@ -106,8 +130,12 @@ const crawler = new PlaywrightCrawler({
             transformRequestFunction: (req) => {
                 try {
                     const reqUrl = new URL(req.url);
-                    const startHost = new URL(startUrls[0]).hostname;
-                    if (reqUrl.hostname !== startHost) return false;
+                    const currentHost = new URL(request.url).hostname;
+
+                    // Only crawl internal links
+                    if (reqUrl.hostname !== currentHost) return false;
+
+                    // Skip unnecessary or duplicate paths
                     if (!reqUrl.protocol.startsWith('http')) return false;
                     if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
                         return false;
@@ -116,10 +144,10 @@ const crawler = new PlaywrightCrawler({
                         console.log('Skipping:', reqUrl.href);
                         return false;
                     }
-                    
+
                     return req;
                 } catch (err) {
-                    console.error('Error from link handler', err);
+                    console.error('Error in transformRequestFunction:', err);
                     return false;
                 }
             },
@@ -132,8 +160,19 @@ const crawler = new PlaywrightCrawler({
     },
 });
 
-(async () => {
-    console.log('🚀 Starting the informative content crawler...');
-    await crawler.run(startUrls);
-    console.log('✅ Crawl finished.');
-})();
+const main = async () => {
+  console.log('🚀 Starting the informative content crawler...');
+  startUrls = await fetchDataFromMongoDB();
+  if (!startUrls) {
+    console.log("No unused startup found in database.");
+    return;
+  }
+  await crawler.run(startUrls);
+  console.log('✅ Crawl finished.');
+};
+
+// main();
+
+export {
+    main
+}
