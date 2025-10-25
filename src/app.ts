@@ -1,6 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
-import { MongoDB } from "./database";
 import mongoose from "mongoose";
+import { CustomError } from "./utils/custom-error";
 const app = express();
 
 // Middlewares
@@ -12,14 +12,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/api/health', async (req: Request, res: Response) => {
-  let dbStatus = 'Disconnected';
-  try {
-    mongoose.connection.on("connected", () => dbStatus = "connected");
-    dbStatus = 'Connected';
-  } catch (error) {
-    console.error('Database connection error:', error);
-    dbStatus = 'Disconnected';
+  let dbStatus = 'Unknown';
+
+  switch (mongoose.connection.readyState) {
+    case 0:
+      dbStatus = 'Disconnected';
+      break;
+    case 1:
+      dbStatus = 'Connected';
+      break;
+    case 2:
+      dbStatus = 'Connecting';
+      break;
+    case 3:
+      dbStatus = 'Disconnecting';
+      break;
+    default:
+      dbStatus = 'Unknown';
   }
+
   res.json({ 
     status: 'OK', 
     message: 'Server is running',
@@ -31,26 +42,23 @@ app.get('/api/health', async (req: Request, res: Response) => {
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
   res.json({ 
-    message: 'Welcome to Express contests Backend API',
+    message: 'Welcome to AI bot Backend API',
     version: '1.0.0',
-    database: 'PostgreSQL',
+    database: 'PostgreSQL, MongoDB',
     endpoints: {
-      health: '/api/health',
-      contests: '/api/v1/contests',
-      participants: '/api/v1/participants',
-      submissions_contests: '/api/v1/submissions/contests'
+      health: '/api/health'
     }
   });
 });
 
 // Error handling
-// app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
-//   res.status(err.statusCode || 500).json({
-//     Success: false,
-//     Message: err.message,
-//     Data: null,
-//     Errors: null
-//   });
-// });
+app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
+  res.status(err.statusCode || 500).json({
+    Success: false,
+    Message: err.message,
+    Data: null,
+    Errors: null
+  });
+});
 
 export default app;
