@@ -96,7 +96,7 @@ const crawler = new PlaywrightCrawler({
     async requestHandler({ page, request, enqueueLinks, log }) {
         log.info(`Crawling: ${request.url}`);
 
-        await page.waitForSelector('body', { timeout: 20000 });
+        await page.waitForLoadState('networkidle', { timeout: 15000 });
 
         const title = await page.title();
         const metaDescription = await page
@@ -122,6 +122,31 @@ const crawler = new PlaywrightCrawler({
             description: summary,
             text,
             crawledAt: new Date().toISOString(),
+        });
+
+        await page.evaluate(() => {
+            return new Promise((resolve) => {
+                let lastHeight = document.body.scrollHeight;
+                let sameHeightCount = 0;
+                const distance = 500;
+
+                const timer = setInterval(() => {
+                window.scrollBy(0, distance);
+                const newHeight = document.body.scrollHeight;
+
+                if (newHeight === lastHeight) {
+                    sameHeightCount++;
+                } else {
+                    sameHeightCount = 0;
+                    lastHeight = newHeight;
+                }
+
+                if (sameHeightCount >= 3) {
+                    clearInterval(timer);
+                    resolve("Done scrolling");
+                }
+                }, 500);
+            });
         });
 
         // Enqueue internal links
