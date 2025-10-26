@@ -109,10 +109,10 @@ const crawler = new PlaywrightCrawler({
         const finalTitle = article?.title || title;
         const summary = article?.summary || metaDescription;
 
-        // if (!text || text.split(' ').length < 50) {
-        //     log.info(`Skipping non-informative page: ${request.url}`);
-        //     return;
-        // }
+        if (!text || text.split(' ').length < 30) {
+            log.info(`Skipping non-informative page: ${request.url}`);
+            return;
+        }
 
         // Save to Dataset
         const startupDataset = await Dataset.open('MixerBox');
