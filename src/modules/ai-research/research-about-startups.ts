@@ -1,7 +1,6 @@
 import axios from "axios";
 import { Startups } from "../../interfaces/startups-types";
-import { config } from "dotenv";
-config();
+import "dotenv/config";
 
 const API_FREE_LLM = process.env.API_FREE_LLM || "https://apifreellm.com/api/chat";
 

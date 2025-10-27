@@ -1,8 +1,7 @@
 import app from "./app";
 import { MongoDB } from "./database";
-import { config } from "dotenv";
+import "dotenv/config";
 import { main } from "./modules/fetch-startup-data/crawlee";
-config();
 
 const PORT = process.env.PORT || 404;
 
