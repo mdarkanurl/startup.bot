@@ -1,7 +1,7 @@
 import { PlaywrightCrawler, Dataset } from 'crawlee';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
-import { Startup } from "../../database/mongodb/mongodb";
+import { Startup } from "../../db/mongodb/mongodb";
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',

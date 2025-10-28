@@ -2,7 +2,7 @@ import axios from "axios";
 import fs from "fs";
 import path from "path";
 import { Startup } from "../../../interfaces/ycombinator-types";
-import { MongoDB } from "../../../database";
+import { MongoDB } from "../../../db";
 
 const filePath = path.join(__dirname, "startups.json");
 

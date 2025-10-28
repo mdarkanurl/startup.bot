@@ -1,5 +1,5 @@
 import app from "./app";
-import { MongoDB } from "./database";
+import { MongoDB } from "./db";
 import "dotenv/config";
 import { main } from "./modules/fetch-startup-data/crawlee";
 
