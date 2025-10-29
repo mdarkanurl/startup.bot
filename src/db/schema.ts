@@ -11,3 +11,13 @@ export const startup = pgTable("startup", {
   foundedAt: text("foundedAt"),
   isUsed: boolean("isUsed").notNull().default(false),
 });
+
+
+export const raw_startup_data = pgTable("raw_startup_data", {
+  id: uuid("id").primaryKey(),
+  url: text("url").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  text: text("text").notNull(),
+  crawledAt: text("crawledAt").notNull(),
+});
