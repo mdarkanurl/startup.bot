@@ -20,4 +20,9 @@ export const raw_startup_data = pgTable("raw_startup_data", {
   description: text("description").notNull(),
   text: text("text").notNull(),
   crawledAt: text("crawledAt").notNull(),
+  VC_firm: text("VC_firm").notNull().default("unknown"),
+  services: text("services").notNull().default(""),
+  founder_names: text("founder_names").array().notNull().default([]),
+  foundedAt: text("foundedAt"),
+  isUsed: boolean("isUsed").notNull().default(false),
 });
