@@ -184,7 +184,7 @@ const crawler = new PlaywrightCrawler({
     },
 });
 
-const main = async () => {
+const getStartupDataFromWebsite = async () => {
   console.log('🚀 Starting the informative content crawler...');
   startUrls = await fetchDataFromMongoDB();
   if (!startUrls) {
@@ -198,5 +198,5 @@ const main = async () => {
 // main();
 
 export {
-    main
+    getStartupDataFromWebsite
 }
