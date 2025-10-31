@@ -24,3 +24,7 @@ const ai2incubator=  async () => {
 
 // Call the function
 ai2incubator();
+
+export {
+    ai2incubator
+}
