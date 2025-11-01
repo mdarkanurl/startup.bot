@@ -1,1 +1,0 @@
-ALTER TABLE "web_page_data" DROP COLUMN "crawledAt";

@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1761967265116,
-      "tag": "0000_naive_power_pack",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1761968125229,
-      "tag": "0001_pink_zodiak",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1761968628620,
-      "tag": "0002_free_lila_cheney",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1761969508067,
-      "tag": "0003_tricky_luckman",
+      "when": 1762013155243,
+      "tag": "0000_square_mandrill",
       "breakpoints": true
     }
   ]
