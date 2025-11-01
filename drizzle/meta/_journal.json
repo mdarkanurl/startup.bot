@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1761667560665,
-      "tag": "0000_huge_patriot",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1761752406848,
-      "tag": "0001_flashy_shocker",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1761752771420,
-      "tag": "0002_misty_vulcan",
+      "when": 1761967265116,
+      "tag": "0000_naive_power_pack",
       "breakpoints": true
     }
   ]

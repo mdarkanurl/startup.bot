@@ -1,5 +1,5 @@
 {
-  "id": "928d3cf0-f1cd-41fa-a85a-e1c4abf6938c",
+  "id": "411d6c0f-ade9-4d36-99c1-983afd6c1b7a",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -20,8 +20,73 @@
           "primaryKey": false,
           "notNull": true
         },
-        "website": {
-          "name": "website",
+        "VC_firm": {
+          "name": "VC_firm",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
+        "founder_names[]": {
+          "name": "founder_names[]",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "foundedAt": {
+          "name": "foundedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "web_page_data_id": {
+          "name": "web_page_data_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "startup_web_page_data_id_web_page_data_id_fk": {
+          "name": "startup_web_page_data_id_web_page_data_id_fk",
+          "tableFrom": "startup",
+          "tableTo": "web_page_data",
+          "columnsFrom": [
+            "web_page_data_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.web_page_data": {
+      "name": "web_page_data",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -32,29 +97,17 @@
           "primaryKey": false,
           "notNull": true
         },
-        "VC_firm": {
-          "name": "VC_firm",
+        "text": {
+          "name": "text",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "services": {
-          "name": "services",
+        "crawledAt": {
+          "name": "crawledAt",
           "type": "text",
           "primaryKey": false,
           "notNull": true
-        },
-        "founder_names": {
-          "name": "founder_names",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "foundedAt": {
-          "name": "foundedAt",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
         },
         "isUsed": {
           "name": "isUsed",
