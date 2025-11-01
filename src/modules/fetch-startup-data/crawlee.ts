@@ -2,6 +2,9 @@ import { PlaywrightCrawler, Dataset } from 'crawlee';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Startup } from "../../db/mongodb/mongodb";
+import { db } from "../../index";
+import { Tables } from "../../db";
+import { sql, eq } from 'drizzle-orm';
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',
@@ -66,16 +69,24 @@ const fetchDataFromMongoDB = async () => {
         const startup = await Startup.findOne();
         if(!startup) return null;
 
+        const result = await db
+            .insert(Tables.startup)
+            .values({
+                name: startup.name?.toString() || "",
+                VC_firm: startup.VC_firm?.toString() || "",
+                founder_names: startup.founder_names?.map(name => name.toString()) || [],
+                foundedAt: startup.foundedAt?.toString() || "",
+            })
+            .returning();
+
+        if (!result) return null;
+
         return [
             {
                 url: startup.website || "",
                 userData: {
-                    VC_firm: startup.VC_firm,
-                    founder_names: startup.founder_names,
-                    name: startup.name,
-                    description: startup.description,
-                    foundedAt: startup.foundedAt
-                }
+                    id: result[0].id,
+                },
             }
         ];
     } catch (error) {
@@ -112,6 +123,24 @@ const crawler = new PlaywrightCrawler({
             log.info(`Skipping non-informative page: ${request.url}`);
             return;
         }
+
+        // Save the data to the database
+        const result = await db
+            .insert(Tables.web_page_data)
+            .values({
+                url: request.url,
+                title: finalTitle,
+                description: summary || "",
+                text,
+            })
+            .returning();
+
+        await db
+            .update(Tables.startup)
+            .set({
+                web_page_data_ids: sql`${Tables.startup.web_page_data_ids} || ${result[0].id}::uuid`,
+            })
+            .where(eq(Tables.startup.id, request.userData.id));
 
         // Save to Dataset
         const startupDataset = await Dataset.open('MixerBox');
