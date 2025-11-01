@@ -1,0 +1,1 @@
+ALTER TABLE "startup" ALTER COLUMN "web_page_data_id" SET DATA TYPE uuid[];

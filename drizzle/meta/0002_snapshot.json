@@ -1,0 +1,136 @@
+{
+  "id": "a669a711-8a46-4b23-bc10-eef725a310e9",
+  "prevId": "54ea1ec4-464b-4cc8-9d53-40e25a0b5297",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.startup": {
+      "name": "startup",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "VC_firm": {
+          "name": "VC_firm",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'unknown'"
+        },
+        "founder_names[]": {
+          "name": "founder_names[]",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "foundedAt": {
+          "name": "foundedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "web_page_data_id": {
+          "name": "web_page_data_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "startup_web_page_data_id_web_page_data_id_fk": {
+          "name": "startup_web_page_data_id_web_page_data_id_fk",
+          "tableFrom": "startup",
+          "tableTo": "web_page_data",
+          "columnsFrom": [
+            "web_page_data_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.web_page_data": {
+      "name": "web_page_data",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "url": {
+          "name": "url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "isUsed": {
+          "name": "isUsed",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
