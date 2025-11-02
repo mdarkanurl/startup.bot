@@ -143,7 +143,7 @@ const crawler = new PlaywrightCrawler({
             .where(eq(Tables.startup.id, request.userData.id));
 
         // Save to Dataset
-        const startupDataset = await Dataset.open('MixerBox');
+        const startupDataset = await Dataset.open('Checkr');
         await startupDataset.pushData({
             url: request.url,
             title: finalTitle,
