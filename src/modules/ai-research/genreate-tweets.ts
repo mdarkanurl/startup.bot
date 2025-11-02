@@ -3,7 +3,7 @@ import { db } from "../../index";
 
 const generateAndSaveTweets = async () => {
     // Get startup data from the database
-    const startups = await db.startups.findMany();
+    // const startups = await db.startups.findMany();
 
     // format the data for tweet generation
 
