@@ -97,16 +97,16 @@ const fetchDataFromMongoDB = async () => {
 const crawler = new PlaywrightCrawler({
     launchContext: {
         launchOptions: {
-            headless: false,
+            // headless: false,
         },
     },
 
-    maxRequestsPerCrawl: 10,
+    maxRequestsPerCrawl: 200,
 
     async requestHandler({ page, request, enqueueLinks, log }) {
         log.info(`Crawling: ${request.url}`);
 
-        await page.waitForLoadState('networkidle', { timeout: 15000 });
+        await page.waitForLoadState('networkidle', { timeout: 50000 });
 
         const title = await page.title();
         const metaDescription = await page
@@ -132,18 +132,14 @@ const crawler = new PlaywrightCrawler({
                 title: finalTitle,
                 description: summary || "",
                 text,
+                startupId: request.userData.id,
             })
             .returning();
 
-        await db
-            .update(Tables.startup)
-            .set({
-                web_page_data_ids: sql`${Tables.startup.web_page_data_ids} || ${result[0].id}::uuid`,
-            })
-            .where(eq(Tables.startup.id, request.userData.id));
+        console.log('Saved to DB with ID:', result[0]);
 
         // Save to Dataset
-        const startupDataset = await Dataset.open('Checkr');
+        const startupDataset = await Dataset.open('Akido-Labs');
         await startupDataset.pushData({
             url: request.url,
             title: finalTitle,
@@ -197,6 +193,8 @@ const crawler = new PlaywrightCrawler({
                         console.log('Skipping:', reqUrl.href);
                         return false;
                     }
+
+                    req.userData = { id: request.userData.id };
 
                     return req;
                 } catch (err) {
