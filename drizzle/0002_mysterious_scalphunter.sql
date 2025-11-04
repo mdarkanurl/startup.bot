@@ -1,0 +1,1 @@
+ALTER TABLE "web_page_data" ALTER COLUMN "startupId" SET DATA TYPE text;
