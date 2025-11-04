@@ -1,4 +1,3 @@
-import { relations } from "drizzle-orm";
 import { text, pgTable, uuid, boolean } from "drizzle-orm/pg-core";
 
 export const web_page_data = pgTable("web_page_data", {
@@ -8,6 +7,7 @@ export const web_page_data = pgTable("web_page_data", {
   description: text("description").notNull(),
   text: text("text").notNull(),
   isUsed: boolean("isUsed").notNull().default(false),
+  startupId: text("startupId").notNull(),
 });
 
 export const startup = pgTable("startup", {
@@ -15,7 +15,5 @@ export const startup = pgTable("startup", {
   name: text("name").notNull(),
   VC_firm: text("VC_firm").notNull().default("unknown"),
   founder_names: text("founder_names[]").array().notNull().default([]),
-  foundedAt: text("foundedAt"),
-  web_page_data_ids: uuid("web_page_data_id")
-    .array()
+  foundedAt: text("foundedAt")
 });
