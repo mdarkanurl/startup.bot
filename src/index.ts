@@ -10,15 +10,10 @@ const db = drizzle(process.env.DATABASE_URL!);
 // const startupsData = async () => {
 //     await fetchYCombinatorStartups(startups); // YCombinator
 //     await ai2incubator(); // AI2 Incubator
-// }
 
-while (true) {
-    getStartupDataFromWebsite();
+getStartupDataFromWebsite();
 
-    if(consumerEvents.on("pageCrawled", () => true)) {
-        getStartupDataFromWebsite();
-    }
-}
+consumerEvents.on('pageCrawled', async () => await getStartupDataFromWebsite());
 
 // generate tweets and save them to the database
 
