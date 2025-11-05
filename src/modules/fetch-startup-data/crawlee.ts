@@ -4,7 +4,8 @@ import { Readability } from '@mozilla/readability';
 import { Startup } from "../../db/mongodb/mongodb";
 import { db } from "../../index";
 import { Tables } from "../../db";
-import { sql, eq } from 'drizzle-orm';
+import { EventEmitter } from "node:events";
+export const consumerEvents = new EventEmitter();
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',
@@ -210,6 +211,7 @@ const crawler = new PlaywrightCrawler({
         } else {
             log.info(`Skipping link enqueueing for non-root page: ${request.url}`);
         }
+        consumerEvents.emit("pageCrawled", { url: request.url, status: "success" });
     },
 
     failedRequestHandler({ request, error, log }) {
@@ -226,8 +228,10 @@ const crawler = new PlaywrightCrawler({
                 return;
             }
             } else {
-            log.error(`Unknown error type: ${String(error)}`);
+                log.error(`Unknown error type: ${String(error)}`);
             }
+
+            consumerEvents.emit("pageCrawled", { url: request.url, status: "failed" });
     },
 });
 
