@@ -67,7 +67,7 @@ const extractInformativeText = async (page: any) => {
 // Fetch startup data from MongoDB
 const fetchDataFromMongoDB = async () => {
     try {
-        const startup = await Startup.findOne();
+        const startup = await Startup.findOne({ isUsed: false });
         if(!startup) return null;
 
         const result = await db
@@ -87,6 +87,7 @@ const fetchDataFromMongoDB = async () => {
                 url: startup.website || "",
                 userData: {
                     id: result[0].id,
+                    mongoID: startup.id,
                 },
             }
         ];
@@ -211,10 +212,12 @@ const crawler = new PlaywrightCrawler({
         } else {
             log.info(`Skipping link enqueueing for non-root page: ${request.url}`);
         }
+
+        await Startup.updateOne({ id: request.userData.mongoID }).set({ isUsed: true });
         consumerEvents.emit("pageCrawled", { url: request.url, status: "success" });
     },
 
-    failedRequestHandler({ request, error, log }) {
+    async failedRequestHandler({ request, error, log }) {
         log.error(`Failed ${request.url}`);
 
         if (error instanceof Error) {
@@ -231,6 +234,7 @@ const crawler = new PlaywrightCrawler({
                 log.error(`Unknown error type: ${String(error)}`);
             }
 
+            await Startup.updateOne({ id: request.userData.mongoID }).set({ isUsed: true });
             consumerEvents.emit("pageCrawled", { url: request.url, status: "failed" });
     },
 });
