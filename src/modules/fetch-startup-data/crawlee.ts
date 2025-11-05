@@ -11,7 +11,7 @@ const excludedPatterns = [
     'contact', 'support', 'faq', 'cookie', 'policy',
     'help', 'careers', 'jobs', 'apply', 'hire'];
 
-let startUrls: any[] | null | undefined = [];
+let startUrls: any;
 
 const extractVisibleText = async (page: any) => {
     return await page.evaluate(() => {
@@ -173,41 +173,61 @@ const crawler = new PlaywrightCrawler({
             });
         });
 
-        // Enqueue internal links
-        await enqueueLinks({
-            selector: 'a[href]',
-            transformRequestFunction: (req) => {
-                try {
-                    const reqUrl = new URL(req.url);
-                    const currentHost = new URL(request.url).hostname;
+        const baseUrl = new URL(startUrls[0].url).origin;
 
-                    // Only crawl internal links
-                    if (reqUrl.hostname !== currentHost) return false;
+        if(request.url === baseUrl) {
+            // Enqueue internal links
+            await enqueueLinks({
+                selector: 'a[href]',
+                transformRequestFunction: (req) => {
+                    try {
+                        const reqUrl = new URL(req.url);
+                        const currentHost = new URL(request.url).hostname;
 
-                    // Skip unnecessary or duplicate paths
-                    if (!reqUrl.protocol.startsWith('http')) return false;
-                    if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
-                        return false;
+                        // Only crawl internal links
+                        if (reqUrl.hostname !== currentHost) return false;
 
-                    if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word))) {
-                        console.log('Skipping:', reqUrl.href);
+                        // Skip unnecessary or duplicate paths
+                        if (!reqUrl.protocol.startsWith('http')) return false;
+                        if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
+                            return false;
+
+                        if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word))) {
+                            console.log('Skipping:', reqUrl.href);
+                            return false;
+                        }
+
+                        req.userData = { id: request.userData.id };
+
+                        return req;
+                    } catch (err) {
+                        console.error('Error in transformRequestFunction:', err);
                         return false;
                     }
-
-                    req.userData = { id: request.userData.id };
-
-                    return req;
-                } catch (err) {
-                    console.error('Error in transformRequestFunction:', err);
-                    return false;
-                }
-            },
-            globs: ['**/*'],
-        });
+                },
+                globs: ['**/*'],
+            });
+        } else {
+            log.info(`Skipping link enqueueing for non-root page: ${request.url}`);
+        }
     },
 
-    failedRequestHandler({ request, log }) {
+    failedRequestHandler({ request, error, log }) {
         log.error(`Failed ${request.url}`);
+
+        if (error instanceof Error) {
+            if (error.message.includes('ERR_TOO_MANY_REDIRECTS')) {
+                log.warning(`Skipping ${request.url} due to redirect loop.`);
+                return;
+            }
+
+            if (error.message.includes('Timeout')) {
+                log.warning(`Skipping ${request.url} due to timeout.`);
+                return;
+            }
+            } else {
+            log.error(`Unknown error type: ${String(error)}`);
+            }
     },
 });
 
