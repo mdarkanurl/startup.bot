@@ -1,4 +1,4 @@
-import { PlaywrightCrawler, Dataset } from 'crawlee';
+import { PlaywrightCrawler, Dataset, RequestQueue } from 'crawlee';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Startup } from "../../db/mongodb/mongodb";
@@ -176,11 +176,13 @@ const crawler = new PlaywrightCrawler({
         });
 
         const baseUrl = new URL(startUrls[0].url).origin;
+        const requestQueue = await RequestQueue.open(); // ✅ Shared queue
 
         if(request.url === baseUrl) {
             // Enqueue internal links
             await enqueueLinks({
                 selector: 'a[href]',
+                requestQueue,
                 transformRequestFunction: (req) => {
                     try {
                         const reqUrl = new URL(req.url);
@@ -193,6 +195,8 @@ const crawler = new PlaywrightCrawler({
                         if (!reqUrl.protocol.startsWith('http')) return false;
                         if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
                             return false;
+
+                        reqUrl.pathname = reqUrl.pathname.replace(/\/$/, '');
 
                         if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word))) {
                             console.log('Skipping:', reqUrl.href);
@@ -249,8 +253,6 @@ const getStartupDataFromWebsite = async () => {
   await crawler.run(startUrls);
   console.log('✅ Crawl finished.');
 };
-
-// main();
 
 export {
     getStartupDataFromWebsite
