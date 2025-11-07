@@ -19,6 +19,7 @@ const fetchDataFromMongoDB = async () => {
             .returning();
 
         if (!result) return null;
+        await Startup.updateOne({ id: startup.id }, { $set: { isUsed: true } });
 
         return [
             {
