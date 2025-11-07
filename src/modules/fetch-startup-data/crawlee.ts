@@ -4,8 +4,6 @@ import { fetchDataFromMongoDB } from "./get-data-from-mongo";
 import "dotenv/config";
 import { db } from "../../connection";
 import { Tables } from "../../db";
-import { EventEmitter } from "node:events";
-export const consumerEvents = new EventEmitter();
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',
@@ -186,7 +184,6 @@ async function getStartupDataFromWebsite() {
     }
     await crawler.run(startUrls);
     console.log('✅ Crawl finished.');
-    consumerEvents.emit("pageCrawled", { status: "finished" });
 }
 
 // getStartupDataFromWebsite();
