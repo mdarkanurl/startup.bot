@@ -12,6 +12,17 @@ const excludedPatterns = [
 
 let startUrls: any;
 
+const normalizeUrl = (url: string) => {
+    try {
+        const u = new URL(url.toLowerCase());
+        let host = u.hostname.replace(/^www\./, '');
+        let path = u.pathname.replace(/\/$/, '');
+        return `${u.protocol}//${host}${path}`;
+    } catch (err) {
+        return url;
+    }
+};
+
 const crawler = new PlaywrightCrawler({
     launchContext: {
         launchOptions: {
@@ -124,16 +135,13 @@ const crawler = new PlaywrightCrawler({
                 requestQueue,
                 transformRequestFunction: (req) => {
                     console.log('Found link:', req.url);
+                    req.url = normalizeUrl(req.url);
                     try {
                         const reqUrl = new URL(req.url);
                         const currentHost = new URL(request.url).hostname;
 
-                        const normalize = (host: string) => host.toLowerCase().replace(/^www\./, '');
-
                         // Only crawl internal links
-                        console.log('Current host:', currentHost, "Req host:", reqUrl.hostname);
-                        if (normalize(reqUrl.hostname) !== normalize(currentHost)) return false;
-                        console.log('Internal link accepted:', reqUrl.href);
+                        if (normalizeUrl(reqUrl.hostname) !== normalizeUrl(currentHost)) return false;
 
                         // Skip duplicates or hash links
                         if (reqUrl.hash) return false;
