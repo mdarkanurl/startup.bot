@@ -1,7 +1,7 @@
 import { PlaywrightCrawler, Dataset, RequestQueue } from 'crawlee';
-import { JSDOM } from 'jsdom';
-import { Readability } from '@mozilla/readability';
-import { Startup } from "../../db/mongodb/mongodb";
+import { extractInformativeText, extractVisibleText } from './extract-visible-readability';
+import { fetchDataFromMongoDB } from "./get-data-from-mongo";
+import "dotenv/config";
 import { db } from "../../connection";
 import { Tables } from "../../db";
 import { EventEmitter } from "node:events";
@@ -14,141 +14,35 @@ const excludedPatterns = [
 
 let startUrls: any;
 
-const extractVisibleText = async (page: any) => {
-    return await page.evaluate(() => {
-        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null as any);
-        const visibleTexts: string[] = [];
-
-        function isVisible(node: Node) {
-            const el = node.parentElement;
-            if (!el) return false;
-            const style = window.getComputedStyle(el);
-            if (
-                style.visibility === 'hidden' ||
-                style.display === 'none' ||
-                parseFloat(style.opacity || '1') === 0
-            ) {
-                return false;
-            }
-            const rect = el.getBoundingClientRect();
-            if (rect.width === 0 && rect.height === 0) return false;
-            return true;
-        }
-
-        while (walker.nextNode()) {
-            const node = walker.currentNode;
-            const text = node.nodeValue?.trim();
-            if (!text) continue;
-            if (!isVisible(node)) continue;
-            if (text.length < 30) continue;
-            visibleTexts.push(text);
-        }
-
-        return visibleTexts.join(' ').replace(/\s+/g, ' ').trim();
-    });
-};
-
-
-const extractInformativeText = async (page: any) => {
-    const html = await page.content();
-    const dom = new JSDOM(html, { url: page.url() });
-    const reader = new Readability(dom.window.document);
-    const article = reader.parse();
-
-    if (!article) return null;
-
-    return {
-        title: article.title,
-        text: article.textContent?.replace(/\s+/g, ' ').trim(),
-        summary: article.excerpt,
-    };
-};
-
-// Fetch startup data from MongoDB
-const fetchDataFromMongoDB = async () => {
-    try {
-        const startup = await Startup.findOne({ isUsed: false });
-        if(!startup) return null;
-
-        const result = await db
-            .insert(Tables.startup)
-            .values({
-                name: startup.name?.toString() || "",
-                VC_firm: startup.VC_firm?.toString() || "",
-                founder_names: startup.founder_names?.map(name => name.toString()) || [],
-                foundedAt: startup.foundedAt?.toString() || "",
-            })
-            .returning();
-
-        if (!result) return null;
-
-        return [
-            {
-                url: startup.website || "",
-                userData: {
-                    id: result[0].id,
-                    mongoID: startup.id,
-                },
-            }
-        ];
-    } catch (error) {
-        console.error("Error from crawlee", error);
-    }
-}
-
 const crawler = new PlaywrightCrawler({
     launchContext: {
         launchOptions: {
-            // headless: false,
+            headless: process.env.HEADLESS === 'false' ? false : true,
         },
     },
 
-    maxRequestsPerCrawl: 200,
+    maxRequestsPerCrawl: Number(process.env.MAX_REQUESTS || 200),
+    maxConcurrency: 5,
 
     async requestHandler({ page, request, enqueueLinks, log }) {
-        log.info(`Crawling: ${request.url}`);
+        log.info(`Crawling: ${request.url} | Depth: ${request.userData.depth ?? 0}`);
 
-        await page.waitForLoadState('networkidle', { timeout: 50000 });
+        try {
+            await page.route('**/*', (route) => {
+                const request = route.request();
+                const type = request.resourceType();
+                if (['image', 'media', 'font', 'stylesheet'].includes(type)) {
+                    route.abort();
+                } else {
+                    route.continue();
+                }
+            });
 
-        const title = await page.title();
-        const metaDescription = await page
-            .$eval('meta[name="description"]', (m: any) => m?.getAttribute('content'))
-            .catch(() => null);
-
-        const article = await extractInformativeText(page);
-
-        const text = article?.text || (await extractVisibleText(page));
-        const finalTitle = article?.title || title;
-        const summary = article?.summary || metaDescription;
-
-        if (!text || text.split(' ').length < 30) {
-            log.info(`Skipping non-informative page: ${request.url}`);
+            await page.goto(request.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        } catch (err) {
+            log.warning(`Skipping ${request.url} due to timeout or navigation error.`);
             return;
         }
-
-        // Save the data to the database
-        const result = await db
-            .insert(Tables.web_page_data)
-            .values({
-                url: request.url,
-                title: finalTitle,
-                description: summary || "",
-                text,
-                startupId: request.userData.id,
-            })
-            .returning();
-
-        console.log('Saved to DB with ID:', result[0]);
-
-        // Save to Dataset
-        const startupDataset = await Dataset.open('Akido-Labs');
-        await startupDataset.pushData({
-            url: request.url,
-            title: finalTitle,
-            description: summary,
-            text,
-            crawledAt: new Date().toISOString(),
-        });
 
         await page.evaluate(() => {
             return new Promise((resolve) => {
@@ -175,39 +69,85 @@ const crawler = new PlaywrightCrawler({
             });
         });
 
+        const title = await page.title();
+        const metaDescription = await page
+            .$eval('meta[name="description"]', (m: any) => m?.getAttribute('content'))
+            .catch(() => null);
+
+        const article = await extractInformativeText(page);
+
+        const text = article?.text || (await extractVisibleText(page));
+        const finalTitle = article?.title || title;
+        const summary = article?.summary || metaDescription;
+
+        if (!text || text.split(' ').length < 30) {
+            log.info(`Skipping non-informative page: ${request.url}`);
+            return;
+        }
+
+        // Save the data to the database
+        try {
+            const result = await db
+                .insert(Tables.web_page_data)
+                .values({
+                    url: request.url,
+                    title: finalTitle,
+                    description: summary || "",
+                    text,
+                    startupId: request.userData.id,
+                })
+                .returning();
+
+            console.log('Saved to DB with ID:', result[0]);
+        } catch (error: any) {
+            log.error(`Failed to save data for ${request.url}: ${error.message}`);
+            return;
+        }
+
+        // Save to Dataset
+        const startupDataset = await Dataset.open('Akido-Labs');
+        await startupDataset.pushData({
+            url: request.url,
+            title: finalTitle,
+            description: summary,
+            text,
+            crawledAt: new Date().toISOString(),
+        });
+
         const baseUrl = new URL(startUrls[0].url).origin;
         const requestQueue = await RequestQueue.open(); // ✅ Shared queue
 
         if(request.url === baseUrl) {
+            console.log('Enqueueing links from the homepage:', request.url);
+            console.log("baseUrl:", baseUrl);
             // Enqueue internal links
             await enqueueLinks({
                 selector: 'a[href]',
                 requestQueue,
                 transformRequestFunction: (req) => {
+                    console.log('Found link:', req.url);
                     try {
                         const reqUrl = new URL(req.url);
                         const currentHost = new URL(request.url).hostname;
 
+                        const normalize = (host: string) => host.toLowerCase().replace(/^www\./, '');
+
                         // Only crawl internal links
-                        if (reqUrl.hostname !== currentHost) return false;
+                        console.log('Current host:', currentHost, "Req host:", reqUrl.hostname);
+                        if (normalize(reqUrl.hostname) !== normalize(currentHost)) return false;
+                        console.log('Internal link accepted:', reqUrl.href);
 
-                        // Skip unnecessary or duplicate paths
-                        if (!reqUrl.protocol.startsWith('http')) return false;
-                        if (reqUrl.hash && reqUrl.pathname === new URL(request.url).pathname)
+                        // Skip duplicates or hash links
+                        if (reqUrl.hash) return false;
+
+                        // Skip certain words
+                        if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word)))
                             return false;
-
-                        reqUrl.pathname = reqUrl.pathname.replace(/\/$/, '');
-
-                        if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word))) {
-                            console.log('Skipping:', reqUrl.href);
-                            return false;
-                        }
 
                         req.userData = { id: request.userData.id };
-
                         return req;
                     } catch (err) {
-                        console.error('Error in transformRequestFunction:', err);
+                        console.error('Error in transformRequestFunction:', err, req.url);
                         return false;
                     }
                 },
@@ -216,9 +156,6 @@ const crawler = new PlaywrightCrawler({
         } else {
             log.info(`Skipping link enqueueing for non-root page: ${request.url}`);
         }
-
-        await Startup.updateOne({ id: request.userData.mongoID }).set({ isUsed: true });
-        consumerEvents.emit("pageCrawled", { url: request.url, status: "success" });
     },
 
     async failedRequestHandler({ request, error, log }) {
@@ -237,9 +174,6 @@ const crawler = new PlaywrightCrawler({
             } else {
                 log.error(`Unknown error type: ${String(error)}`);
             }
-
-            await Startup.updateOne({ id: request.userData.mongoID }).set({ isUsed: true });
-            consumerEvents.emit("pageCrawled", { url: request.url, status: "failed" });
     },
 });
 
@@ -252,6 +186,7 @@ async function getStartupDataFromWebsite() {
     }
     await crawler.run(startUrls);
     console.log('✅ Crawl finished.');
+    consumerEvents.emit("pageCrawled", { status: "finished" });
 }
 
 // getStartupDataFromWebsite();
