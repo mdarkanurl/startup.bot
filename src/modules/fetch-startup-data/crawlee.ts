@@ -2,7 +2,7 @@ import { PlaywrightCrawler, Dataset, RequestQueue } from 'crawlee';
 import { JSDOM } from 'jsdom';
 import { Readability } from '@mozilla/readability';
 import { Startup } from "../../db/mongodb/mongodb";
-import { db } from "../../index";
+import { db } from "../../connection";
 import { Tables } from "../../db";
 import { EventEmitter } from "node:events";
 export const consumerEvents = new EventEmitter();
@@ -243,16 +243,18 @@ const crawler = new PlaywrightCrawler({
     },
 });
 
-const getStartupDataFromWebsite = async () => {
-  console.log('🚀 Starting the informative content crawler...');
-  startUrls = await fetchDataFromMongoDB();
-  if (!startUrls) {
-    console.log("No unused startup found in database.");
-    return;
-  }
-  await crawler.run(startUrls);
-  console.log('✅ Crawl finished.');
-};
+async function getStartupDataFromWebsite() {
+    console.log('🚀 Starting the informative content crawler...');
+    startUrls = await fetchDataFromMongoDB();
+    if (!startUrls) {
+        console.log("No unused startup found in database.");
+        return;
+    }
+    await crawler.run(startUrls);
+    console.log('✅ Crawl finished.');
+}
+
+// getStartupDataFromWebsite();
 
 export {
     getStartupDataFromWebsite
