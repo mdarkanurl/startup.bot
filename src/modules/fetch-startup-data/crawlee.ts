@@ -113,16 +113,6 @@ const crawler = new PlaywrightCrawler({
             return;
         }
 
-        // Save to Dataset
-        const startupDataset = await Dataset.open('Akido-Labs');
-        await startupDataset.pushData({
-            url: request.url,
-            title: finalTitle,
-            description: summary,
-            text,
-            crawledAt: new Date().toISOString(),
-        });
-
         const baseUrl = new URL(startUrls[0].url).origin;
         const requestQueue = await RequestQueue.open(); // ✅ Shared queue
 
