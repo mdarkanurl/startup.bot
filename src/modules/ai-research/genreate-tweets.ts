@@ -5,6 +5,7 @@ import { generateSummaryOfPages } from "./generate-summary-of-pages";
 
 const API_FREE_LLM = process.env.API_FREE_LLM || "https://apifreellm.com/api/chat";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
+const CHUNK_SIZE = Number(process.env.CHUNK_SIZE) || 7;
 
 const googleGenAI = new GoogleGenAI({
     apiKey: GEMINI_API_KEY,
@@ -39,17 +40,11 @@ export async function generateAndSaveTweets() {
     const summaries: string[] = [];
 
     // process 7 pages at a time safely
-    for (let i = 0; i < pages.length; i += 7) {
-        const page1 = pages[i];
-        const page2 = pages[i + 1];
-        const page3 = pages[i + 2];
-        const page4 = pages[i + 3];
-        const page5 = pages[i + 4];
-        const page6 = pages[i + 5];
-        const page7 = pages[i + 6];
+    for (let i = 0; i < pages.length; i += CHUNK_SIZE) {
+        const chunk = pages.slice(i, i + CHUNK_SIZE);
 
-        console.log(`Summarizing pages ${i + 1} to ${i + 7}...`);
-        const res = await generateSummaryOfPages(page1, page2, page3, page4, page5, page6, page7);
+        console.log(`Summarizing pages ${i + 1} to ${i + chunk.length}...`);
+        const res = await generateSummaryOfPages(...chunk);
 
         if (res) summaries.push(res);
 
@@ -63,4 +58,4 @@ export async function generateAndSaveTweets() {
 }
 
 
-console.log("Summary of a website: ", generateAndSaveTweets());
+generateAndSaveTweets();
