@@ -1,7 +1,7 @@
 import { db } from "../../connection";
 import { GenerateContentResponse, GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
-import { generateSummaryOfTwoPages } from "./generate-summary-of-two-pages";
+import { generateSummaryOfPages } from "./generate-summary-of-pages";
 
 const API_FREE_LLM = process.env.API_FREE_LLM || "https://apifreellm.com/api/chat";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
@@ -38,13 +38,18 @@ export async function generateAndSaveTweets() {
 
     const summaries: string[] = [];
 
-    // process 2 pages at a time safely
-    for (let i = 0; i < pages.length; i += 2) {
+    // process 7 pages at a time safely
+    for (let i = 0; i < pages.length; i += 7) {
         const page1 = pages[i];
         const page2 = pages[i + 1];
+        const page3 = pages[i + 2];
+        const page4 = pages[i + 3];
+        const page5 = pages[i + 4];
+        const page6 = pages[i + 5];
+        const page7 = pages[i + 6];
 
-        console.log(`Summarizing pages ${i + 1} and ${i + 2}...`);
-        const res = await generateSummaryOfTwoPages(page1, page2);
+        console.log(`Summarizing pages ${i + 1} to ${i + 7}...`);
+        const res = await generateSummaryOfPages(page1, page2, page3, page4, page5, page6, page7);
 
         if (res) summaries.push(res);
 
