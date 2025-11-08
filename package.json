@@ -9,7 +9,7 @@
     "build": "tsc",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "drizzle:studio": "drizzle-kit studio"
+    "studio": "drizzle-kit studio"
   },
   "repository": {
     "type": "git",
