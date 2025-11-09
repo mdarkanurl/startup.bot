@@ -1,4 +1,4 @@
-import { db } from "../../connection";
+import { db } from "../../../connection";
 import 'dotenv/config';
 import { generateSummaryOfPages } from "./generate-summary-of-pages";
 

@@ -1,12 +1,6 @@
 import axios from "axios";
-import fs from "fs";
-import path from "path";
 import { Startup } from "../../../interfaces/ycombinator-types";
 import { MongoDB } from "../../../db";
-
-const filePath = path.join(__dirname, "startups.json");
-
-let set = new Set();
 
 // Return array of startups
 const startups = async (URL: string): Promise<Startup[]> => {
@@ -63,10 +57,6 @@ const fetchYCombinatorStartups = async (data: any) => {
         console.error(err);
       }
     }
-
-    // Write to JSON file
-    fs.writeFileSync(filePath, JSON.stringify(startups, null, 2), "utf-8");
-    console.log(`Saved ${startups.length} startups to ${filePath}`);
   } catch (error) {
     console.error("Error fetching startups:", error);
   }

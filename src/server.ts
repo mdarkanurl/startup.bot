@@ -1,7 +1,7 @@
 import app from "./app";
 import { MongoDB } from "./db";
 import "dotenv/config";
-import { getStartupDataFromWebsite } from "./modules/fetch-startup-data/crawlee";
+import { getStartupDataFromWebsite } from "./modules/fetch-data-from-online/website-crawler/crawlee";
 
 const PORT = process.env.PORT || 404;
 

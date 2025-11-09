@@ -1,6 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
-import { aiUtils } from '../../utils';
+import { aiUtils } from '../../../utils';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const DELAY_MS = 30000; // 30 seconds

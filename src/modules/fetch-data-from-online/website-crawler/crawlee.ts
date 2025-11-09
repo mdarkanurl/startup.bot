@@ -1,9 +1,9 @@
-import { PlaywrightCrawler, Dataset, RequestQueue } from 'crawlee';
+import { PlaywrightCrawler, RequestQueue } from 'crawlee';
 import { extractInformativeText, extractVisibleText } from './extract-visible-readability';
 import { fetchDataFromMongoDB } from "./get-data-from-mongo";
 import "dotenv/config";
-import { db } from "../../connection";
-import { Tables } from "../../db";
+import { db } from "../../../connection";
+import { Tables } from "../../../db";
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',

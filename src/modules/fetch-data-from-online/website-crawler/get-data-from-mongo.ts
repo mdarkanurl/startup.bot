@@ -1,6 +1,6 @@
-import { Startup } from "../../db/mongodb/mongodb";
-import { db } from "../../connection";
-import { Tables } from "../../db";
+import { Startup } from "../../../db/mongodb/mongodb";
+import { db } from "../../../connection";
+import { Tables } from "../../../db";
 
 // Fetch startup data from MongoDB
 const fetchDataFromMongoDB = async () => {
