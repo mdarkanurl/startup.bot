@@ -17,3 +17,10 @@ export const startup = pgTable("startup", {
   founder_names: text("founder_names[]").array().notNull().default([]),
   foundedAt: text("foundedAt")
 });
+
+export const ai_generated_startup_summary = pgTable("ai_generated_startup_summary", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  summary: text("summary").array().notNull(),
+  startupId: text("startupId").notNull(),
+  isUsed: boolean("isUsed").notNull().default(false),
+});
