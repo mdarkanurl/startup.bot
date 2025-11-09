@@ -50,6 +50,9 @@ importers:
       puppeteer-core:
         specifier: ^24.24.0
         version: 24.24.0
+      twitter-api-v2:
+        specifier: ^1.27.0
+        version: 1.27.0
     devDependencies:
       '@types/express':
         specifier: ^5.0.3
@@ -2739,6 +2742,9 @@ packages:
 
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
+
+  twitter-api-v2@1.27.0:
+    resolution: {integrity: sha512-hbIFwzg0NeOcFOdmJqtKMCXjLjc0INff/7NwhnZ2zpnw65oku8i+0eMxo5M0iTc1hs+inD/IpDw3S0Xh2c45QQ==}
 
   type-fest@0.21.3:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
@@ -5937,6 +5943,8 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
     optional: true
+
+  twitter-api-v2@1.27.0: {}
 
   type-fest@0.21.3: {}
 

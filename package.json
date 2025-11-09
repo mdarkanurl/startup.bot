@@ -36,7 +36,8 @@
     "pg": "^8.16.3",
     "playwright": "^1.56.0",
     "puppeteer": "^24.23.0",
-    "puppeteer-core": "^24.24.0"
+    "puppeteer-core": "^24.24.0",
+    "twitter-api-v2": "^1.27.0"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
