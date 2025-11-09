@@ -1,6 +1,6 @@
 import { Startup } from "./mongodb/mongodb";
 import { DBConnect } from "./mongodb/mongodb-connect";
-import { startup, web_page_data, ai_generated_startup_summary } from "./schema";
+import { startup, web_page_data, ai_generated_startup_summary, tweets } from "./schema";
 
 const MongoDB = {
     StartupDB: Startup,
@@ -10,7 +10,8 @@ const MongoDB = {
 const Tables = {
     startup,
     web_page_data,
-    ai_generated_startup_summary
+    ai_generated_startup_summary,
+    tweets
 }
 
 export {

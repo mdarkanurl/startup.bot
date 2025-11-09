@@ -24,3 +24,10 @@ export const ai_generated_startup_summary = pgTable("ai_generated_startup_summar
   startupId: text("startupId").notNull(),
   isUsed: boolean("isUsed").notNull().default(false),
 });
+
+export const tweets = pgTable("tweets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  startupId: text("startupId").notNull(),
+  tweet: text("tweet").notNull(),
+  isUsed: boolean("isUsed").notNull().default(false),
+});

@@ -29,6 +29,13 @@
       "when": 1762704363740,
       "tag": "0003_purple_dark_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1762706428005,
+      "tag": "0004_overjoyed_talisman",
+      "breakpoints": true
     }
   ]
 }
