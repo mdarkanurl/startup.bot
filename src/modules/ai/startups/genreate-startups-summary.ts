@@ -1,4 +1,5 @@
 import { db } from "../../../connection";
+import { redis } from "../../../db/redis";
 import 'dotenv/config';
 import { generateSummaryOfPages } from "./generate-summary-of-pages";
 
@@ -21,10 +22,11 @@ export async function generateSummaryOfStartups() {
             )
         ),
         columns: {
-        url: true,
-        title: true,
-        description: true,
-        text: true,
+            url: true,
+            title: true,
+            description: true,
+            text: true,
+            startupId: true,
         },
     });
 
@@ -41,6 +43,19 @@ export async function generateSummaryOfStartups() {
     }
 
     console.log("✅ Summaries generated:", summaries);
+
+    try {
+        // Save summaries to Redis
+        const saveSummary = await redis.set(
+            pages[0].startupId,
+            JSON.stringify(summaries)
+        );
+
+        console.log("✅ Summaries saved to Redis:", saveSummary);
+    } catch (error) {
+        console.error("❌ Error saving summaries to Redis:", error);
+    }
+
     return summaries;
 }
 
