@@ -1,8 +1,7 @@
 import { db } from "../../../connection";
-import { redis } from "../../../db/redis";
 import 'dotenv/config';
 import { generateSummaryOfPages } from "./generate-summary-of-pages";
-import { web_page_data } from "../../../db/schema";
+import { ai_generated_startup_summary, web_page_data } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 
 const CHUNK_SIZE = Number(process.env.CHUNK_SIZE) || 5;
@@ -47,15 +46,15 @@ export async function generateSummaryOfStartups() {
     console.log("✅ Summaries generated:", summaries);
 
     try {
-        // Save summaries to Redis
-        const saveSummary = await redis.set(
-            pages[0].startupId,
-            JSON.stringify(summaries)
-        );
+        // Save summaries to DB
+        const saveSummary = await db.insert(ai_generated_startup_summary).values({
+            summary: summaries,
+            startupId: pages[0].startupId
+        });
 
-        console.log("✅ Summaries saved to Redis:", saveSummary);
+        console.log("✅ Summaries saved to DB:", saveSummary);
     } catch (error) {
-        console.error("❌ Error saving summaries to Redis:", error);
+        console.error("❌ Error saving summaries to DB:", error);
     }
 
     try {
