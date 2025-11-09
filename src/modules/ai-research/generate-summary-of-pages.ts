@@ -1,5 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
+import { aiUtils } from '../../utils';
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const DELAY_MS = 30000; // 30 seconds
@@ -23,10 +24,6 @@ const models = [
   "gemini-2.0-flash",
   "gemini-2.0-flash-lite",
 ];
-
-async function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 export async function generateSummaryOfPages(...pages: PageData[]): Promise<string | null | undefined> {
     console.log(`Generating summary for ${pages.length} pages...`);
@@ -71,7 +68,7 @@ export async function generateSummaryOfPages(...pages: PageData[]): Promise<stri
 
             const text = res?.text || "No text returned.";
             console.log(`Success with ${model}`);
-            await delay(DELAY_MS);
+            await aiUtils.delay(DELAY_MS);
             return text;
         } catch (error: any) {
             console.error(`Error with ${model}:`, error?.message);
@@ -80,7 +77,7 @@ export async function generateSummaryOfPages(...pages: PageData[]): Promise<stri
             if (error?.status === 429 || /rate/i.test(error?.message)) {
                 console.warn(`Rate limit hit for ${model}, switching to next model...`);
                 modelIndex = (modelIndex + 1) % models.length;
-                await delay(DELAY_MS);
+                await aiUtils.delay(DELAY_MS);
                 continue;
             }
 
