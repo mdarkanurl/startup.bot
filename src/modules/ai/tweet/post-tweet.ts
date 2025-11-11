@@ -1,57 +1,39 @@
-import axios from "axios";
+import { TwitterApi } from "twitter-api-v2";
 import { db } from "../../../connection";
-import { TwitterApi } from 'twitter-api-v2';
-
-const X_POST_API_ENDPOINT = process.env.X_POST_API_ENDPOINT || "https://api.x.com/2/tweets";
-const X_BEARER_TOKEN = process.env.X_BEARER_TOKEN || "";
+import "dotenv/config";
+import { tweets } from "../../../db/schema";
+import { eq } from "drizzle-orm";
 
 const client = new TwitterApi({
-  appKey: process.env.X_API_KEY!,
-  appSecret: process.env.X_API_SECRET!,
-  accessToken: process.env.X_ACCESS_TOKEN!,
-  accessSecret: process.env.X_ACCESS_SECRET!,
+  appKey: process.env.X_API_KEY || "",
+  appSecret: process.env.X_API_SECRET || "",
+  accessToken: process.env.X_ACCESS_TOKEN || "",
+  accessSecret: process.env.X_ACCESS_TOKEN_SECRET || "",
 });
+
+const rwClient = client.readWrite;
 
 export async function postTweet() {
     try {
-        // Fetch tweet fron DB
-        const tweet = await db.query.tweets.findFirst({
-            with: {
-                isUsed: false
-            }
-        });
+      // Fetch tweet fron DB
+      const tweetFromDB = await db.query.tweets.findFirst({
+        where: (tweets, { eq }) => eq(tweets.isUsed, false)
+      });
 
-        if(!tweet) return console.log("No tweet found");
+      if(!tweetFromDB) return console.log("No tweet found");
 
-        // Post the tweet
-        try {
-            // const response = await axios.post(
-            //     X_POST_API_ENDPOINT,
-            //     {
-            //         text: tweet.tweet
-            //     },
-            //     {
-            //         headers: {
-            //         'Authorization': `Bearer ${X_BEARER_TOKEN}`,
-            //         'Content-Type': 'application/json',
-            //         },
-            //     }
-            // );
+      // Post the tweet
+      const tweet = await rwClient.v2.tweet(tweetFromDB.tweet);
+      console.log("Tweeted successfully:", tweet.data);
 
-            const tweet = await client.v2.tweet('Hello world – my first post via API!');
-            console.log(tweet);
+      // update the data
+      await db.update(tweets)
+        .set({ isUsed: true })
+        .where(eq(tweets.startupId, tweetFromDB.startupId));
 
-            // if (response.status === 201) {
-            //     console.log('✅ Post created successfully!');
-            //     console.log('Response:', response.data);
-            // } else {
-            //     console.log('⚠️ Unexpected response:', response.status, response.data);
-            // }
-        } catch (error) {
-            console.log("❌ Failed to create post:", error);
-        }
+      console.log("Database update successful!");
     } catch (error) {
-        console.log("Unexpected error: ", error);
+      console.log("Unexpected error: ", error);
     }
 }
 
