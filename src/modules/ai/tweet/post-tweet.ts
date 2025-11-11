@@ -5,8 +5,8 @@ import { tweets } from "../../../db/schema";
 import { eq } from "drizzle-orm";
 
 const client = new TwitterApi({
-  appKey: process.env.X_API_KEY || "",
-  appSecret: process.env.X_API_SECRET || "",
+  appKey: process.env.X_APP_KEY || "",
+  appSecret: process.env.X_APP_SECRET || "",
   accessToken: process.env.X_ACCESS_TOKEN || "",
   accessSecret: process.env.X_ACCESS_TOKEN_SECRET || "",
 });
