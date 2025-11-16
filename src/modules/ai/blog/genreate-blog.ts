@@ -123,12 +123,12 @@ export async function generateBlog() {
                             `Model overloaded (503). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`
                         );
                         
-                        aiUtils.delay(delay);
+                        await aiUtils.delay(delay);
                     }
 
                     if(error.status === 429) {
                         console.log(`Rate limit hit (429). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`);
-                        aiUtils.delay(delay);
+                        await aiUtils.delay(delay);
                     }
                 } else {
                     throw error;
@@ -141,3 +141,5 @@ export async function generateBlog() {
         console.error("Error generating blog:", error);
     }
 }
+
+generateBlog();
