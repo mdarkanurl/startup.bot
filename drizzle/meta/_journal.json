@@ -36,6 +36,20 @@
       "when": 1762706428005,
       "tag": "0004_overjoyed_talisman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1763264416000,
+      "tag": "0005_massive_veda",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1763273046697,
+      "tag": "0006_aromatic_lyja",
+      "breakpoints": true
     }
   ]
 }

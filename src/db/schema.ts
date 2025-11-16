@@ -22,12 +22,20 @@ export const ai_generated_startup_summary = pgTable("ai_generated_startup_summar
   id: uuid("id").defaultRandom().primaryKey(),
   summary: text("summary").array().notNull(),
   startupId: text("startupId").notNull(),
-  isUsed: boolean("isUsed").notNull().default(false),
+  isUsedForTweets: boolean("isUsedForTweets").notNull().default(false),
+  isUsedForBlogs: boolean("isUsedForBlogs").notNull().default(false),
 });
 
 export const tweets = pgTable("tweets", {
   id: uuid("id").defaultRandom().primaryKey(),
   startupId: text("startupId").notNull(),
   tweet: text("tweet").notNull(),
+  isUsed: boolean("isUsed").notNull().default(false),
+});
+
+export const blogs = pgTable("blogs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  startupId: text("startupId").notNull(),
+  blog: text("blog").notNull(),
   isUsed: boolean("isUsed").notNull().default(false),
 });
