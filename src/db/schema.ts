@@ -36,6 +36,7 @@ export const tweets = pgTable("tweets", {
 export const blogs = pgTable("blogs", {
   id: uuid("id").defaultRandom().primaryKey(),
   startupId: text("startupId").notNull(),
+  title: text("title").notNull(),
   blog: text("blog").notNull(),
   isUsed: boolean("isUsed").notNull().default(false),
 });

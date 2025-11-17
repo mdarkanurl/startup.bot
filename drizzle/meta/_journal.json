@@ -50,6 +50,13 @@
       "when": 1763273046697,
       "tag": "0006_aromatic_lyja",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1763356886166,
+      "tag": "0007_outstanding_viper",
+      "breakpoints": true
     }
   ]
 }
