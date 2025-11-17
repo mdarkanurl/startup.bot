@@ -4,7 +4,8 @@ import { ai_generated_startup_summary, blogs } from "../../../db/schema";
 import { aiUtils } from "../../../utils";
 import { ApiError, GoogleGenAI } from "@google/genai";
 import { eq } from "drizzle-orm";
-import "dotenv/config";
+import { promptForGenerateBlog } from "./helper/prompt";
+import { checkBlogsFormatAndGenerateTitle } from "./helper/ai";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -22,60 +23,7 @@ export async function generateBlog() {
         if (!startups) return console.log("No unused startup summaries found.");
 
         // Generate blog using AI
-        const prompt = `
-            You are a professional tech writer.
-            Using the information provided about a startup, write a clear, engaging, and human-sounding blog following the exact structure and rules below.
-            Focus on accuracy, storytelling, and simplicity.
-
-            Blog Structure (Must Follow Exactly)
-            
-            1. Introduction
-            - Briefly introduce the startup
-            - Mention the core problem it solves
-            - Add an interesting or bold hook
-
-            2. The Problem
-            - Describe the market pain point
-            - Explain who faces this issue and why it matters
-
-            3. The Solution
-            - Describe the product or service
-            - Highlight its main features
-            - Explain how it solves the problem better than alternatives
-
-            4. Why This Startup Stands Out
-            - Unique advantages (technology, execution, timing, team)
-            - Traction, stats, or early validation
-
-            5. Business Model
-            - Explain how the startup earns revenue
-            - Example: SaaS, marketplace fees, subscriptions, freemium, etc.
-
-            6. Challenges & Future Outlook
-            - Main obstacles the startup may face
-            - Potential opportunities and long-term possibilities
-
-            7. Conclusion
-            - Summarize the overall value of the startup
-            - End with a strong, forward-looking insight
-
-            Writing Rules (Follow Strictly)
-
-            - Do NOT use first-person pronouns: avoid I, me, we, us, our, my.\
-            - No calls to action: avoid “Check this out,” “Visit now,” etc.
-            - No URLs or external links
-            - Maximum 3 relevant hashtags at the end (optional)
-            - Tone must be professional, confident, simple, and authentic
-            - Sentences must sound human, not robotic
-            - Avoid filler sentences or generic marketing fluff
-
-            Input Format:
-            I will give you a startup summary.
-            You will turn that summary into a full blog using the structure and rules above.
-
-            Startup Summaries:
-            ${startups.summary.join('\n')}
-            `;
+        const prompt = promptForGenerateBlog(startups.summary);
 
         let attempts = 0;
         const maxAttempts = 5;
@@ -99,8 +47,14 @@ export async function generateBlog() {
 
                 console.log("✅ Generated Blog:", res.text);
 
+                // Check blogs for format by AI
+                const resLLM = await checkBlogsFormatAndGenerateTitle(res.text);
+
+                if(!resLLM) return console.log("Invalid blog format");
+
                 await db.insert(blogs).values({
                     startupId: startups.startupId,
+                    title: resLLM.title,
                     blog: res.text,
                 });
 

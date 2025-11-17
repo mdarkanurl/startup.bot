@@ -15,7 +15,7 @@ export async function generateTweet() {
     try {
         // Get startup summary from DB
         const startups = await db.query.ai_generated_startup_summary.findFirst({
-            where: (summaries, { eq }) => eq(summaries.isUsed, false)
+            where: (summaries, { eq }) => eq(summaries.isUsedForTweets, false)
         });
 
         if(!startups) {
@@ -96,7 +96,7 @@ export async function generateTweet() {
 
                 // Mark the summaries as used
                 await db.update(ai_generated_startup_summary)
-                    .set({ isUsed: true })
+                    .set({ isUsedForTweets: true })
                     .where(eq(ai_generated_startup_summary.startupId, startups.startupId));
 
                 console.log("Marked startup summaries as used.");

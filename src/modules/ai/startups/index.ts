@@ -1,4 +1,4 @@
-import { generateSummaryOfStartups } from "./genreate-startups-summary";
+import { generateSummaryOfStartups } from "./generate-startups-summary";
 
 const ai_startups = {
     generateSummaryOfStartups
