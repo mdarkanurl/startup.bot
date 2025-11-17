@@ -27,9 +27,6 @@ export async function generateBlog() {
 
         let attempts = 0;
         const maxAttempts = 5;
-
-        const delay: number = Math.pow(2, attempts) * 1000;
-
         while (attempts < maxAttempts) {
             try {
                 const res = await googleGenAI.models.generateContent({
@@ -70,9 +67,11 @@ export async function generateBlog() {
             } catch (error: any) {
                 
                 if (error instanceof ApiError) {
+                    attempts++;
                     
+                    const delay: number = Math.pow(2, attempts) * 1000;
+
                     if(error.status === 503) {
-                        attempts++;
                         console.log(
                             `Model overloaded (503). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`
                         );

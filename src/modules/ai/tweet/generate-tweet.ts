@@ -51,9 +51,9 @@ export async function generateTweet() {
         let attempts = 0;
         const maxAttempts = 5;
 
-        const delay: number = Math.pow(2, attempts) * 1000;
-
         while (attempts < maxAttempts) {
+            const delay: number = Math.pow(2, attempts) * 1000;
+            
             try {
                 const res = await googleGenAI.models.generateContent({
                     model: "gemini-2.5-pro",
@@ -104,9 +104,11 @@ export async function generateTweet() {
             } catch (error: any) {
                 
                 if (error instanceof ApiError) {
+                    attempts++;
+
                     
+
                     if(error.status === 503) {
-                        attempts++;
                         console.log(
                             `Model overloaded (503). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`
                         );
