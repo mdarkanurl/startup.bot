@@ -3,10 +3,11 @@ import "dotenv/config";
 import { db } from "../../../connection";
 import { ApiError, GoogleGenAI } from "@google/genai";
 import { aiUtils } from "../../../utils";
+import { blogs } from "../../../db/schema";
+import { eq } from "drizzle-orm";
 
 const apiKey = process.env.DEVTO_API_KEY || "";
 const baseUrl = process.env.DEVTO_BASE_URL || "https://dev.to/api";
-
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 const googleGenAI = new GoogleGenAI({
@@ -15,18 +16,20 @@ const googleGenAI = new GoogleGenAI({
 
 async function postBlog() {
   try {
-      // Fetch blog content fron DB
-      const blogs = await db.query.blogs.findFirst({
-        where: (blogs, { eq }) => eq(blogs.isUsed, false)
-      });
+    /** 1. Fetch a blog that isn't used yet */
+    const blog = await db.query.blogs.findFirst({
+      where: (blogs, { eq }) => eq(blogs.isUsed, false)
+    });
 
-      if(!blogs) return console.log("No blog found");
+    if (!blog) {
+      console.log("No unused blog found.");
+      return;
+    }
 
-      // check the format of blog content
-      const formatCheckPrompt = `
+    /** 2. Build the format-checking prompt */
+    const formatCheckPrompt = `
       You are a strict blog format validator.
 
-      Given the blog below, check if it follows all rules:
       Required Sections:
       1. Introduction
       2. The Problem
@@ -36,172 +39,136 @@ async function postBlog() {
       6. Challenges & Future Outlook
       7. Conclusion
 
-      Output ONLY in JSON with fields:
+      Output ONLY JSON:
       {
         "valid": true/false,
         "missing_sections": [],
         "rule_violations": [],
-        "details": "Explain issues shortly"
+        "details": "short explanation"
       }
 
-      Blog to check:
-      ${blogs.blog}`;
+      Blog:
+      ${blog.blog}
+    `;
 
-      let attempts = 0;
-      let maxAttempts = 5;
+    /** Retry Settings */
+    let attempts = 0;
+    const maxAttempts = 5;
 
-      const delay: number = Math.pow(2, attempts) * 1000;
-
-      while(attempts < maxAttempts) {
-        try {
-          const isFormated = await googleGenAI.models.generateContent({
-            model: "gemini-2.5-pro",
-            contents: formatCheckPrompt,
-            config: {
-                systemInstruction: "You are an AI that writes blog",
-            },
-          }) as any;
-
-          
-          const match = isFormated.text.match(/(?<=```json)([\s\S]*?)(?=```)/);
-
-          console.log("Raw LLM output: ", isFormated.text);
-          console.log("Regex output: ", JSON.parse(match[1].trim()));
-
-          if(!JSON.parse(match[1].trim()).valid) {
-            console.log("Invalid blog format");
-            return;
-          }
-
-          // Post the blog to Dev.to
-          await axios.get(
-            `${baseUrl}/users/me`,
+    while (attempts < maxAttempts) {
+      try {
+        /** 3. Call Gemini */
+        const llmRes = await googleGenAI.models.generateContent({
+          model: "gemini-2.5-pro",
+          contents: [
             {
-              headers: {
-                "api-key": apiKey,
-                "Content-Type": "application/json",
-              }
-          });
+              role: "user",
+              parts: [{ text: formatCheckPrompt }]
+            }
+          ],
+          config: {
+            systemInstruction: "You validate blog structure only."
+          }
+        }) as any;
 
-          const data = {
-            title: "This is title",
-            content: blogs.blog,
-            tags: ["AI", "startups"],
+        const rawOutput = llmRes.text || "";
+
+        console.log("Raw LLM output:", rawOutput);
+
+        /** 4. Extract JSON safely */
+        const match = rawOutput.match(/```json([\s\S]*?)```/);
+
+        if (!match) {
+          console.log("❌ No JSON found in LLM output. Trying again…");
+          attempts++;
+          await aiUtils.delay(1000);
+          continue;
+        }
+
+        let formatResult;
+        try {
+          formatResult = JSON.parse(match[1].trim());
+        } catch {
+          console.log("❌ JSON parse error. Trying again…");
+          attempts++;
+          await aiUtils.delay(1000);
+          continue;
+        }
+
+        console.log("Format check result:", formatResult);
+
+        /** 5. Stop if blog is invalid */
+        if (!formatResult.valid) {
+          console.log("❌ Blog format invalid:", formatResult.details);
+          return;
+        }
+
+        /** 6. Publish to Dev.to */
+        const articlePayload = {
+          article: {
+            title: "Untitled Blog",
+            body_markdown: blog.blog,
+            tags: ["AI", "startup", "tech"],
             published: false
           }
+        };
 
-          const res = await axios.post(`${baseUrl}/articles`, data, {
+        const postRes = await axios.post(
+          `${baseUrl}/articles`,
+          articlePayload,
+          {
             headers: {
               "api-key": apiKey,
               "Content-Type": "application/json",
-            },
-          });
-
-          console.log("output from dev.to post req", res.data);
-
-        } catch (error) {
-          if (error instanceof ApiError) {
-                    
-            if(error.status === 503) {
-                attempts++;
-                console.log(
-                    `Model overloaded (503). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`
-                );
-                
-                await aiUtils.delay(delay);
             }
+          }
+        );
 
-            if(error.status === 429) {
-                console.log(`Rate limit hit (429). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`);
-                await aiUtils.delay(delay);
-            }
-          } else {
-              throw error;
+        console.log("✅ Article posted:", postRes.data.url);
+
+        /** 7. Mark the blog as used */
+        await db.update(blogs)
+          .set({ isUsed: true })
+          .where(eq(blogs.id, blog.id));
+
+        console.log("✔ Blog marked as used.");
+
+        return postRes.data;
+
+      } catch (error: any) {
+        /** Handle API errors */
+        if (error instanceof ApiError) {
+          attempts++;
+
+          const delay = Math.pow(2, attempts) * 1000; // exponential backoff
+
+          if (error.status === 503) {
+            console.log(
+              `⚠ Model overloaded (503). Retrying in ${delay / 1000}s… [${attempts}/${maxAttempts}]`
+            );
+            await aiUtils.delay(delay);
+            continue;
+          }
+
+          if (error.status === 429) {
+            console.log(
+              `⚠ Rate limit (429). Retrying in ${delay / 1000}s… [${attempts}/${maxAttempts}]`
+            );
+            await aiUtils.delay(delay);
+            continue;
           }
         }
+
+        /** Unknown error: throw it */
+        throw error;
       }
-      
-    } catch (error) {
-      console.log("Error posting bolg", error)
     }
-}
 
-class DevToPublisher {
-  private apiKey: string;
-  private baseUrl = "https://dev.to/api";
+    console.log("❌ Failed after max retries.");
 
-  constructor() {
-    const key = process.env.DEVTO_API_KEY;
-    if (!key) throw new Error("DEVTO_API_KEY not found in .env");
-    this.apiKey = key;
-  }
-
-  private get headers() {
-    return {
-      "api-key": this.apiKey,
-      "Content-Type": "application/json",
-    };
-  }
-
-  /** Get authenticated user info */
-  async getUser() {
-    const res = await axios.get(`${this.baseUrl}/users/me`, { headers: this.headers });
-    return res.data;
-  }
-
-  /**
-   * Publish a new article to Dev.to
-   * @param title Article title
-   * @param content Markdown content
-   * @param tags List of tags
-   * @param published Whether to publish immediately
-   */
-  async publishArticle(
-    title: string,
-    content: string,
-    tags: string[] = [],
-    published: boolean = false
-  ) {
-    const data = {
-      article: {
-        title,
-        published,
-        body_markdown: content,
-        tags,
-      },
-    };
-
-    const res = await axios.post(`${this.baseUrl}/articles`, data, {
-      headers: this.headers,
-    });
-
-    return res.data;
+  } catch (err) {
+    console.error("❌ Error posting blog:", err);
   }
 }
-
-// Example usage
-(async () => {
-  try {
-    const articleContent = fs.readFileSync("article.md", "utf-8");
-
-    const publisher = new DevToPublisher();
-
-    // Optional: Check your user info
-    const user = await publisher.getUser();
-    console.log(`👋 Logged in as: ${user.username}`);
-
-    // Publish or save as draft
-    const response = await publisher.publishArticle(
-      "My First Dev.to Post via API 🚀",
-      articleContent,
-      ["typescript", "api", "tutorial"],
-      false
-    );
-
-    console.log("✅ Article created:", response.url);
-  } catch (error: any) {
-    console.error("❌ Error:", error.response?.data || error.message);
-  }
-})();
 
 postBlog();
