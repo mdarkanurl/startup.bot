@@ -26,12 +26,12 @@ export async function postTweet() {
       const tweet = await rwClient.v2.tweet(tweetFromDB.tweet);
       console.log("Tweeted successfully:", tweet.data);
 
-      // update the data
+      // Mark the tweet as used
       await db.update(tweets)
         .set({ isUsed: true })
         .where(eq(tweets.startupId, tweetFromDB.startupId));
 
-      console.log("Database update successful!");
+      console.log("Marked the tweet as used.");
     } catch (error) {
       console.log("Unexpected error: ", error);
     }
