@@ -15,11 +15,9 @@ let startUrls: any;
 const normalizeUrl = (url: string) => {
     try {
         const u = new URL(url.toLowerCase());
-        let host = u.hostname.replace(/^www\./, '');
-        let path = u.pathname.replace(/\/$/, '');
-        return `${u.protocol}//${host}${path}`;
+        return u.hostname.replace(/^www\./, '');
     } catch (err) {
-        return url;
+        return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
     }
 };
 
@@ -34,7 +32,7 @@ const crawler = new PlaywrightCrawler({
     maxConcurrency: 5,
 
     async requestHandler({ page, request, enqueueLinks, log }) {
-        log.info(`Crawling: ${request.url} | Depth: ${request.userData.depth ?? 0}`);
+        log.info(`Crawling: ${request.loadedUrl} | Depth: ${request.userData.depth ?? 0}`);
 
         try {
             await page.route('**/*', (route) => {
@@ -47,9 +45,9 @@ const crawler = new PlaywrightCrawler({
                 }
             });
 
-            await page.goto(request.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+            await page.goto(request.loadedUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
         } catch (err) {
-            log.warning(`Skipping ${request.url} due to timeout or navigation error.`);
+            log.warning(`Skipping ${request.loadedUrl} due to timeout or navigation error.`);
             return;
         }
 
@@ -90,7 +88,7 @@ const crawler = new PlaywrightCrawler({
         const summary = article?.summary || metaDescription;
 
         if (!text || text.split(' ').length < 30) {
-            log.info(`Skipping non-informative page: ${request.url}`);
+            log.info(`Skipping non-informative page: ${request.loadedUrl}`);
             return;
         }
 
@@ -99,7 +97,7 @@ const crawler = new PlaywrightCrawler({
             const result = await db
                 .insert(Tables.web_page_data)
                 .values({
-                    url: request.url,
+                    url: request.loadedUrl,
                     title: finalTitle,
                     description: summary || "",
                     text,
@@ -109,26 +107,30 @@ const crawler = new PlaywrightCrawler({
 
             console.log('Saved to DB with ID:', result[0]);
         } catch (error: any) {
-            log.error(`Failed to save data for ${request.url}: ${error.message}`);
+            log.error(`Failed to save data for ${request.loadedUrl}: ${error.message}`);
             return;
         }
 
-        const baseUrl = new URL(startUrls[0].url).origin;
+        const currentOrigin = new URL(request.loadedUrl).origin;
+
+        // Detect final domain only once
+        if (!startUrls.finalDomain) {
+            startUrls.finalDomain = currentOrigin;
+        }
+
         const requestQueue = await RequestQueue.open(); // ✅ Shared queue
 
-        if(request.url === baseUrl) {
-            console.log('Enqueueing links from the homepage:', request.url);
-            console.log("baseUrl:", baseUrl);
+        if(currentOrigin === startUrls.finalDomain) {
+            console.log("baseUrl:", startUrls.finalDomain);
             // Enqueue internal links
             await enqueueLinks({
                 selector: 'a[href]',
                 requestQueue,
                 transformRequestFunction: (req) => {
                     console.log('Found link:', req.url);
-                    req.url = normalizeUrl(req.url);
                     try {
                         const reqUrl = new URL(req.url);
-                        const currentHost = new URL(request.url).hostname;
+                        const currentHost = new URL(request.loadedUrl).hostname;
 
                         // Only crawl internal links
                         if (normalizeUrl(reqUrl.hostname) !== normalizeUrl(currentHost)) return false;
@@ -150,21 +152,21 @@ const crawler = new PlaywrightCrawler({
                 globs: ['**/*'],
             });
         } else {
-            log.info(`Skipping link enqueueing for non-root page: ${request.url}`);
+            log.info(`Skipping link enqueueing for non-root page: ${request.loadedUrl}`);
         }
     },
 
     async failedRequestHandler({ request, error, log }) {
-        log.error(`Failed ${request.url}`);
+        log.error(`Failed ${request.loadedUrl}`);
 
         if (error instanceof Error) {
             if (error.message.includes('ERR_TOO_MANY_REDIRECTS')) {
-                log.warning(`Skipping ${request.url} due to redirect loop.`);
+                log.warning(`Skipping ${request.loadedUrl} due to redirect loop.`);
                 return;
             }
 
             if (error.message.includes('Timeout')) {
-                log.warning(`Skipping ${request.url} due to timeout.`);
+                log.warning(`Skipping ${request.loadedUrl} due to timeout.`);
                 return;
             }
             } else {
@@ -174,7 +176,6 @@ const crawler = new PlaywrightCrawler({
 });
 
 async function getStartupDataFromWebsite() {
-    console.log('🚀 Starting the informative content crawler...');
     startUrls = await fetchDataFromMongoDB();
     if (!startUrls) {
         console.log("No unused startup found in database.");
