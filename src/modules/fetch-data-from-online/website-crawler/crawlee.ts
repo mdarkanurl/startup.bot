@@ -11,13 +11,27 @@ const excludedPatterns = [
     'help', 'careers', 'jobs', 'apply', 'hire'];
 
 let startUrls: any;
+const visited = new Set<string>();
+let finalDomain: string | null = null;
 
-const normalizeUrl = (url: string) => {
+export function normalizeUrl(url: string): string {
     try {
         const u = new URL(url.toLowerCase());
-        return u.hostname.replace(/^www\./, '');
-    } catch (err) {
-        return url.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
+
+        u.search = "";
+        u.hash = "";
+
+        // normalize hostname
+        u.hostname = u.hostname.replace(/^www\./, "");
+
+        // remove trailing slash unless root
+        if (u.pathname !== "/") {
+            u.pathname = u.pathname.replace(/\/$/, "");
+        }
+
+        return u.toString();
+    } catch {
+        return url.toLowerCase().trim();
     }
 };
 
@@ -114,43 +128,70 @@ const crawler = new PlaywrightCrawler({
         const currentOrigin = new URL(request.loadedUrl).origin;
 
         // Detect final domain only once
-        if (!startUrls.finalDomain) {
-            startUrls.finalDomain = currentOrigin;
-        }
+        if (!finalDomain) finalDomain = currentOrigin;
 
         const requestQueue = await RequestQueue.open(); // ✅ Shared queue
 
-        if(currentOrigin === startUrls.finalDomain) {
-            console.log("baseUrl:", startUrls.finalDomain);
+        console.log("normalizeUrl(request.loadedUrl): ", normalizeUrl(request.loadedUrl));
+        console.log("normalizeUrl(finalDomain): ", normalizeUrl(finalDomain));
+
+        if(normalizeUrl(request.loadedUrl) === normalizeUrl(finalDomain)) {
+            console.log("baseUrl:", finalDomain);
             // Enqueue internal links
             await enqueueLinks({
-                selector: 'a[href]',
-                requestQueue,
-                transformRequestFunction: (req) => {
-                    console.log('Found link:', req.url);
-                    try {
-                        const reqUrl = new URL(req.url);
-                        const currentHost = new URL(request.loadedUrl).hostname;
+            selector: 'a[href]',
+            requestQueue,
 
-                        // Only crawl internal links
-                        if (normalizeUrl(reqUrl.hostname) !== normalizeUrl(currentHost)) return false;
+            transformRequestFunction: (req) => {
+                try {
+                    const reqUrl = new URL(req.url);
+                    const base = new URL(finalDomain!);
 
-                        // Skip duplicates or hash links
-                        if (reqUrl.hash) return false;
+                    // Normalize both hostnames
+                    const reqHost = reqUrl.hostname.replace(/^www\./, "");
+                    const baseHost = base.hostname.replace(/^www\./, "");
 
-                        // Skip certain words
-                        if (excludedPatterns.some(word => reqUrl.pathname.toLowerCase().includes(word)))
-                            return false;
+                    // Reject external domains (protocol doesn't matter)
+                    if (reqHost !== baseHost) return false;
+                    console.log("→ Internal link");
 
-                        req.userData = { id: request.userData.id };
-                        return req;
-                    } catch (err) {
-                        console.error('Error in transformRequestFunction:', err, req.url);
-                        return false;
+                    // Skip excluded paths (privacy, login, careers, etc.)
+                    const pathname = reqUrl.pathname.toLowerCase();
+                    if (excludedPatterns.some(word => pathname.includes(word))) return false;
+                    console.log("→ Passed keyword filter");
+
+                    // Remove tracking + hash
+                    reqUrl.search = "";
+                    reqUrl.hash = "";
+
+                    // Remove trailing slash (unless root)
+                    if (reqUrl.pathname !== "/") {
+                        reqUrl.pathname = reqUrl.pathname.replace(/\/$/, "");
                     }
-                },
-                globs: ['**/*'],
-            });
+
+                    // Full normalization
+                    const normalized = normalizeUrl(reqUrl.toString());
+                    console.log("Normalized:", normalized);
+
+                    // Prevent duplicates
+                    if (visited.has(normalized)) return false;
+                    visited.add(normalized);
+                    console.log("→ Added to visited");
+
+                    // Update final request
+                    req.url = normalized;
+                    req.userData = { id: request.userData.id };
+
+                    return req;
+
+                } catch (err) {
+                    console.error("Error in transformRequestFunction:", err, req.url);
+                    return false;
+                }
+            },
+
+            globs: ["**/*"],
+        });
         } else {
             log.info(`Skipping link enqueueing for non-root page: ${request.loadedUrl}`);
         }
