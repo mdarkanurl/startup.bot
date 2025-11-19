@@ -43,7 +43,7 @@ export async function generateSummaryOfStartups() {
         if (res) summaries.push(res);
     }
 
-    console.log("✅ Summaries generated:", summaries);
+    console.log("Summaries generated:", summaries);
 
     try {
         // Save summaries to DB
@@ -52,9 +52,9 @@ export async function generateSummaryOfStartups() {
             startupId: pages[0].startupId
         });
 
-        console.log("✅ Summaries saved to DB:", saveSummary);
+        console.log("Summaries saved to DB:", saveSummary);
     } catch (error) {
-        console.error("❌ Error saving summaries to DB:", error);
+        console.error("Error saving summaries to DB:", error);
     }
 
     try {
@@ -63,13 +63,10 @@ export async function generateSummaryOfStartups() {
             .set({ isUsed: true })
             .where(eq(web_page_data.startupId, pages[0].startupId));
 
-        console.log("✅ Pages isUsed is updated in database");
+        console.log("Pages isUsed is updated in database");
     } catch (error) {
-        console.error("❌ Error updating pages in database:", error);
+        console.error("Error updating pages in database:", error);
     }
 
     return summaries;
 }
-
-
-generateSummaryOfStartups();

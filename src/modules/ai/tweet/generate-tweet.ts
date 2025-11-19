@@ -63,7 +63,7 @@ export async function generateTweet() {
                     continue;
                 }
 
-                console.log("✅ Generated Tweet:", res.text);
+                console.log("Generated Tweet:", res.text);
 
                 // Save tweet to DB
                 await db.insert(tweets).values({
@@ -104,7 +104,7 @@ export async function generateTweet() {
             }
         }
 
-        console.error("❌ Failed after multiple retries (model still overloaded).");
+        console.error("Failed after multiple retries (model still overloaded).");
     } catch (error) {
         console.error("Error fetching startup summaries:", error);
     }

@@ -49,10 +49,10 @@ const fetchYCombinatorStartups = async (data: any) => {
     // Save the data to MongoDB
     try {
       await MongoDB.StartupDB.insertMany(startups, { ordered: false });
-      console.log("✅ Inserted successfully (duplicates skipped)");
+      console.log("Inserted successfully (duplicates skipped)");
     } catch (err: any) {
       if (err.writeErrors) {
-        console.log(`⚠️ ${err.writeErrors.length} duplicates ignored`);
+        console.log(`${err.writeErrors.length} duplicates ignored`);
       } else {
         console.error(err);
       }

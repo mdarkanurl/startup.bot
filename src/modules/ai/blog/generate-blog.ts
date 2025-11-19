@@ -42,7 +42,7 @@ export async function generateBlog() {
                     return;
                 }
 
-                console.log("✅ Generated Blog:", res.text);
+                console.log("Generated Blog:", res.text);
 
                 // Check blogs for format by AI
                 const resLLM = await checkBlogsFormatAndGenerateTitle(res.text);
@@ -89,7 +89,7 @@ export async function generateBlog() {
             }
         }
 
-        console.error("❌ Failed after multiple retries.");
+        console.error("Failed after multiple retries.");
     } catch (error) {
         console.error("Error generating blog:", error);
     }

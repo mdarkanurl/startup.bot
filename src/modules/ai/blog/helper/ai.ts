@@ -69,7 +69,7 @@ export async function checkBlogsFormatAndGenerateTitle(blog: string) {
             }
         }
 
-        console.error("❌ Failed after multiple retries.");
+        console.error("Failed after multiple retries.");
     } catch (error) {
         console.log("Error checking blog's format and generate title: ", error);
     }

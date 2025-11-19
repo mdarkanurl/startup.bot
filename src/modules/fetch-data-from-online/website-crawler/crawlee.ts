@@ -130,7 +130,7 @@ const crawler = new PlaywrightCrawler({
         // Detect final domain only once
         if (!finalDomain) finalDomain = currentOrigin;
 
-        const requestQueue = await RequestQueue.open(); // ✅ Shared queue
+        const requestQueue = await RequestQueue.open();
 
         console.log("normalizeUrl(request.loadedUrl): ", normalizeUrl(request.loadedUrl));
         console.log("normalizeUrl(finalDomain): ", normalizeUrl(finalDomain));
@@ -223,7 +223,6 @@ async function getStartupDataFromWebsite() {
         return;
     }
     await crawler.run(startUrls);
-    console.log('✅ Crawl finished.');
 }
 
 // getStartupDataFromWebsite();

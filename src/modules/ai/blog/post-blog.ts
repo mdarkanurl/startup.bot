@@ -39,18 +39,18 @@ async function postBlog() {
       }
     );
 
-    console.log("✅ Article posted:", postRes.data.url);
+    console.log("Article posted:", postRes.data.url);
 
     /** 7. Mark the blog as used */
     await db.update(blogs)
       .set({ isUsed: true })
       .where(eq(blogs.id, blog.id));
 
-    console.log("✔ Blog marked as used.");
+    console.log("Blog marked as used.");
 
     return postRes.data;
     } catch (error: any) {
-      console.error("❌ Error posting blog:", error);
+      console.error("Error posting blog:", error);
   }
 }
 
