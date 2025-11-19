@@ -62,8 +62,6 @@ const fetchYCombinatorStartups = async (data: any) => {
   }
 };
 
-fetchYCombinatorStartups(startups);
-
 export {
   startups,
   fetchYCombinatorStartups

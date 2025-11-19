@@ -36,5 +36,3 @@ export async function postTweet() {
       console.log("Unexpected error: ", error);
     }
 }
-
-postTweet();

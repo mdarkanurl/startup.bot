@@ -7,7 +7,7 @@ import { eq } from "drizzle-orm";
 const apiKey = process.env.DEVTO_API_KEY || "";
 const baseUrl = process.env.DEVTO_BASE_URL || "https://dev.to/api";
 
-async function postBlog() {
+export async function postBlog() {
   try {
     /** 1. Fetch a blog that isn't used yet */
     const blog = await db.query.blogs.findFirst({
@@ -53,5 +53,3 @@ async function postBlog() {
       console.error("Error posting blog:", error);
   }
 }
-
-postBlog();
