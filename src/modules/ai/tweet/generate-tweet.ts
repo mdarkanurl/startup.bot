@@ -109,5 +109,3 @@ export async function generateTweet() {
         console.error("Error fetching startup summaries:", error);
     }
 }
-
-generateTweet();

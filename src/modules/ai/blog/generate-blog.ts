@@ -94,5 +94,3 @@ export async function generateBlog() {
         console.error("Error generating blog:", error);
     }
 }
-
-generateBlog();
