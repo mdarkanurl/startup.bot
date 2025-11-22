@@ -1,7 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import crypto from "crypto";
 
-const startupsSchema = new Schema({
+const YCstartupsSchema = new Schema({
   id: {
     type: String,
     default: () => crypto.randomUUID(),
@@ -24,8 +24,8 @@ const startupsSchema = new Schema({
   }
 }, { timestamps: true });
 
-const Startup = mongoose.model("Startup", startupsSchema);
+const YCStartup = mongoose.model("YCStartup", YCstartupsSchema);
 
 export {
-  Startup
+  YCStartup
 };
