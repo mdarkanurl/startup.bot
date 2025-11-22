@@ -24,8 +24,23 @@ const YCstartupsSchema = new Schema({
   }
 }, { timestamps: true });
 
+const ProductHuntStartupsSchema = new Schema({
+  id: {
+    type: String,
+    default: () => crypto.randomUUID(),
+    unique: true
+  },
+  startupID: {
+    type: Number,
+    unique: true
+  },
+  website: String,
+}, { timestamps: true });
+
 const YCStartup = mongoose.model("YCStartup", YCstartupsSchema);
+const ProductHuntStartups = mongoose.model("ProductHuntStartups", ProductHuntStartupsSchema);
 
 export {
-  YCStartup
+  YCStartup,
+  ProductHuntStartups
 };

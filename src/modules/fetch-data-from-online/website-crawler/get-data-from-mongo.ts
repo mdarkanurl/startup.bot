@@ -1,11 +1,11 @@
-import { YCStartup } from "../../../db/mongodb/mongodb";
+import { MongoDB } from "../../../db/";
 import { db } from "../../../connection";
 import { Tables } from "../../../db";
 
 // Fetch startup data from MongoDB
 const fetchDataFromMongoDB = async () => {
     try {
-        const startup = await YCStartup.findOne({ isUsed: false });
+        const startup = await MongoDB.YCStartup.findOne({ isUsed: false });
         if(!startup) return null;
 
         const result = await db
@@ -19,7 +19,7 @@ const fetchDataFromMongoDB = async () => {
             .returning();
 
         if (!result) return null;
-        await YCStartup.updateOne({ id: startup.id }, { $set: { isUsed: true } });
+        await MongoDB.YCStartup.updateOne({ id: startup.id }, { $set: { isUsed: true } });
 
         return [
             {
