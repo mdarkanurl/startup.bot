@@ -35,6 +35,10 @@ const ProductHuntStartupsSchema = new Schema({
     unique: true
   },
   website: String,
+  isUsed: {
+    type: Boolean,
+    default: () => false
+  }
 }, { timestamps: true });
 
 const YCStartup = mongoose.model("YCStartup", YCstartupsSchema);

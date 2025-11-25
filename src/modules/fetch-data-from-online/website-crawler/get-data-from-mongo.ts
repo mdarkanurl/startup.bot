@@ -5,16 +5,22 @@ import { Tables } from "../../../db";
 // Fetch startup data from MongoDB
 const fetchDataFromMongoDB = async () => {
     try {
-        const startup = await MongoDB.YCStartup.findOne({ isUsed: false });
+        let startup = await MongoDB.YCStartup.findOne({ isUsed: false });
+
+        if(!startup) {
+            startup = await MongoDB.ProductHuntStartups.findOne({ isUsed: false });
+        };
+
         if(!startup) return null;
 
         const result = await db
             .insert(Tables.startup)
             .values({
-                name: startup.name?.toString() || "",
-                VC_firm: startup.VC_firm?.toString() || "",
+                name: startup.name?.toString(),
+                VC_firm: startup.VC_firm?.toString(),
+                website: startup.website || "",
                 founder_names: startup.founder_names?.map(name => name.toString()) || [],
-                foundedAt: startup.foundedAt?.toString() || "",
+                foundedAt: startup.foundedAt?.toString(),
             })
             .returning();
 
@@ -31,7 +37,7 @@ const fetchDataFromMongoDB = async () => {
             }
         ];
     } catch (error) {
-        console.error("Error from crawlee", error);
+        console.error("Error from MongoDB", error);
     }
 }
 

@@ -12,10 +12,11 @@ export const web_page_data = pgTable("web_page_data", {
 
 export const startup = pgTable("startup", {
   id: uuid("id").defaultRandom().primaryKey(),
-  name: text("name").notNull(),
+  name: text("name"),
   VC_firm: text("VC_firm").notNull().default("unknown"),
-  founder_names: text("founder_names[]").array().notNull().default([]),
-  foundedAt: text("foundedAt")
+  website: text("website").notNull(),
+  founder_names: text("founder_names[]").array().default([]),
+  foundedAt: text("foundedAt"),
 });
 
 export const ai_generated_startup_summary = pgTable("ai_generated_startup_summary", {
