@@ -31,6 +31,11 @@ export async function generateSummaryOfStartups() {
         },
     });
 
+    if(!pages) {
+        console.log("No website crawling page found in the DB.");
+        return;
+    }
+
     const summaries: string[] = [];
 
     // process few pages at a time safely
