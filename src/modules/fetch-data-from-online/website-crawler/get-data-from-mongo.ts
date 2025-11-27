@@ -2,14 +2,9 @@ import { MongoDB } from "../../../db/";
 import { db } from "../../../connection";
 import { Tables } from "../../../db";
 
-// Fetch startup data from MongoDB
-const fetchDataFromMongoDB = async () => {
+async function getDataFromYCStartup() {
     try {
-        let startup = await MongoDB.YCStartup.findOne({ isUsed: false });
-
-        if(!startup) {
-            startup = await MongoDB.ProductHuntStartups.findOne({ isUsed: false });
-        };
+        const startup = await MongoDB.YCStartup.findOne({ isUsed: false });
 
         if(!startup) return null;
 
@@ -26,6 +21,39 @@ const fetchDataFromMongoDB = async () => {
 
         if (!result) return null;
         await MongoDB.YCStartup.updateOne({ id: startup.id }, { $set: { isUsed: true } });
+
+        return [
+            {
+                url: startup.website || "",
+                userData: {
+                    id: result[0].id,
+                    mongoID: startup.id,
+                },
+            }
+        ];
+    } catch (error) {
+        console.log("Error from MongoDB", error);
+    }
+}
+
+// Fetch startup data from MongoDB
+const fetchDataFromMongoDB = async () => {
+    try {
+        let startup = await MongoDB.ProductHuntStartups.findOne({ isUsed: false });
+
+        if(!startup) {
+            return await getDataFromYCStartup();
+        };
+
+        const result = await db
+            .insert(Tables.startup)
+            .values({
+                website: startup.website || "",
+            })
+            .returning();
+
+        if (!result) return null;
+        await MongoDB.ProductHuntStartups.updateOne({ id: startup.id }, { $set: { isUsed: true } });
 
         return [
             {
