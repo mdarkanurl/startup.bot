@@ -21,7 +21,7 @@ export async function generateBlog() {
         });
 
         if (!startups) return console.log("No unused startup summaries found.");
-        if(startups.summary.length <= 5) return console.log("Not enough summaries to generate blog");
+        if(startups.summary.length <= 3) return console.log("Not enough summaries to generate blog");
 
         // Generate blog using AI
         const prompt = promptForGenerateBlog(startups.summary);
