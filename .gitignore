@@ -4,4 +4,4 @@ test.ts
 dist
 storage
 *.log
-*.json
+logs
