@@ -6,9 +6,11 @@ import { generateTweet } from "./modules/ai/tweet/generate-tweet";
 import { generateBlog } from "./modules/ai/blog/generate-blog";
 import { postTweet } from "./modules/ai/tweet/post-tweet";
 import { postBlog } from "./modules/ai/blog/post-blog";
+import { MongoDB } from "./db";
 
 async function main() {
     try {
+        await MongoDB.DBConnect();
         let now: Date = new Date();
         let oneDayLater: Date = new Date(now.getTime() + (24 * 60 * 60 * 1000));
         let oneHoursLater: Date = new Date(now.getTime() + (1 * 60 * 60 * 1000));

@@ -35,7 +35,6 @@ function isTodayOrYesterday(dateString: string) {
 }
 
 async function fetchTodayYesterdayPosts() {
-  await MongoDB.DBConnect();
   let cursor = null;
   let websites = [];
   let page = 1;
