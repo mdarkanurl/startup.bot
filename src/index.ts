@@ -7,6 +7,11 @@ import { generateBlog } from "./modules/ai/blog/generate-blog";
 import { postTweet } from "./modules/ai/tweet/post-tweet";
 import { postBlog } from "./modules/ai/blog/post-blog";
 import { MongoDB } from "./db";
+import { logger } from "./winston";
+
+const childLogger = logger.child({
+  file_path: "src/index.ts",
+});
 
 async function main() {
     try {
@@ -46,7 +51,7 @@ async function main() {
             };
         }
     } catch (error) {
-        console.log("ERROR from main function", error);
+        childLogger.error(`ERROR: from main function ${error}`);
     }
 }
 
