@@ -31,7 +31,7 @@ export async function generateSummaryOfStartups() {
         },
     });
 
-    if(!pages) {
+    if(pages.length === 0) {
         console.log("No website crawling page found in the DB.");
         return;
     }
