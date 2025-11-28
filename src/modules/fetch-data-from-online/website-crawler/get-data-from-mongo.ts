@@ -1,6 +1,11 @@
 import { MongoDB } from "../../../db/";
 import { db } from "../../../connection";
 import { Tables } from "../../../db";
+import { logger } from "../../../winston";
+
+const childLogger = logger.child({
+  file_path: "website-crawler/get-data-from-mongo.ts",
+});
 
 async function getDataFromYCStartup() {
     try {
@@ -32,7 +37,7 @@ async function getDataFromYCStartup() {
             }
         ];
     } catch (error) {
-        console.log("Error from MongoDB", error);
+        childLogger.error(`Error: ${error}`);
     }
 }
 
@@ -65,7 +70,7 @@ const fetchDataFromMongoDB = async () => {
             }
         ];
     } catch (error) {
-        console.error("Error from MongoDB", error);
+        childLogger.error(`Error: ${error}`);
     }
 }
 

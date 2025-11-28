@@ -5,6 +5,11 @@ import "dotenv/config";
 import { db } from "../../../connection";
 import { Tables } from "../../../db";
 import { normalizeUrl, removeREFParams } from './regex';
+import { logger } from "../../../winston";
+
+const childLogger = logger.child({
+  file_path: "website-crawler/crawlee.ts",
+});
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',
@@ -25,8 +30,8 @@ const crawler = new PlaywrightCrawler({
     maxRequestsPerCrawl: Number(process.env.MAX_REQUESTS || 200),
     maxConcurrency: 5,
 
-    async requestHandler({ page, request, enqueueLinks, log }) {
-        log.info(`Crawling: ${request.loadedUrl} | Depth: ${request.userData.depth ?? 0}`);
+    async requestHandler({ page, request, enqueueLinks }) {
+        childLogger.info(`Crawling: ${request.loadedUrl}`);
 
         try {
             await page.route('**/*', (route) => {
@@ -41,7 +46,7 @@ const crawler = new PlaywrightCrawler({
 
             await page.goto(request.loadedUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
         } catch (err) {
-            log.warning(`Skipping ${request.loadedUrl} due to timeout or navigation error.`);
+            childLogger.warning(`Skipping ${request.loadedUrl} due to timeout or navigation error.`);
             return;
         }
 
@@ -82,7 +87,7 @@ const crawler = new PlaywrightCrawler({
         const summary = article?.summary || metaDescription;
 
         if (!text || text.split(' ').length < 30) {
-            log.info(`Skipping non-informative page: ${request.loadedUrl}`);
+            childLogger.info(`Skipping non-informative page: ${request.loadedUrl}`);
             return;
         }
 
@@ -101,9 +106,9 @@ const crawler = new PlaywrightCrawler({
 
             visited.add(removeREFParams(request.loadedUrl));
 
-            console.log('Saved to DB with ID:', result[0]);
+            childLogger.info(`Saved crawled pages to DB`);
         } catch (error) {
-            log.error(`Failed to save data: ${error}`);
+            childLogger.error(`Failed to save data: ${error}`);
             return;
         }
 
@@ -114,11 +119,7 @@ const crawler = new PlaywrightCrawler({
 
         const requestQueue = await RequestQueue.open();
 
-        console.log("normalizeUrl(request.loadedUrl): ", normalizeUrl(request.loadedUrl));
-        console.log("normalizeUrl(finalDomain): ", normalizeUrl(finalDomain));
-
         if(normalizeUrl(request.loadedUrl) === normalizeUrl(finalDomain)) {
-            console.log("baseUrl:", finalDomain);
             // Enqueue internal links
             await enqueueLinks({
             selector: 'a[href]',
@@ -135,12 +136,10 @@ const crawler = new PlaywrightCrawler({
 
                     // Reject external domains (protocol doesn't matter)
                     if (reqHost !== baseHost) return false;
-                    console.log("→ Internal link");
 
                     // Skip excluded paths (privacy, login, careers, etc.)
                     const pathname = reqUrl.pathname.toLowerCase();
                     if (excludedPatterns.some(word => pathname.includes(word))) return false;
-                    console.log("→ Passed keyword filter");
 
                     // Remove tracking + hash
                     reqUrl.search = "";
@@ -153,12 +152,10 @@ const crawler = new PlaywrightCrawler({
 
                     // Full normalization
                     const normalized = normalizeUrl(reqUrl.toString());
-                    console.log("Normalized:", normalized);
 
                     // Prevent duplicates
                     if (visited.has(normalized)) return false;
                     visited.add(normalized);
-                    console.log("→ Added to visited");
 
                     // Update final request
                     req.url = normalized;
@@ -167,7 +164,7 @@ const crawler = new PlaywrightCrawler({
                     return req;
 
                 } catch (err) {
-                    console.error("Error in transformRequestFunction:", err, req.url);
+                    childLogger.error(`Error in transformRequestFunction: ${err}`);
                     return false;
                 }
             },
@@ -175,25 +172,25 @@ const crawler = new PlaywrightCrawler({
             globs: ["**/*"],
         });
         } else {
-            log.info(`Skipping link enqueueing for non-root page: ${request.loadedUrl}`);
+            childLogger.info(`Skipping link enqueueing for non-root page: ${request.loadedUrl}`);
         }
     },
 
-    async failedRequestHandler({ request, error, log }) {
-        log.error(`Failed ${request.loadedUrl}`);
+    async failedRequestHandler({ request, error }) {
+        childLogger.error(`Failed ${request.loadedUrl}`);
 
         if (error instanceof Error) {
             if (error.message.includes('ERR_TOO_MANY_REDIRECTS')) {
-                log.warning(`Skipping ${request.loadedUrl} due to redirect loop.`);
+                childLogger.warning(`Skipping ${request.loadedUrl} due to redirect loop.`);
                 return;
             }
 
             if (error.message.includes('Timeout')) {
-                log.warning(`Skipping ${request.loadedUrl} due to timeout.`);
+                childLogger.warning(`Skipping ${request.loadedUrl} due to timeout.`);
                 return;
             }
             } else {
-                log.error(`Unknown error type: ${String(error)}`);
+                childLogger.error(`Unknown error type: ${String(error)}`);
             }
     },
 });
@@ -201,7 +198,7 @@ const crawler = new PlaywrightCrawler({
 async function getStartupDataFromWebsite() {
     startUrls = await fetchDataFromMongoDB();
     if (!startUrls) {
-        console.log("No unused startup found in database.");
+        childLogger.info("No unused startup found in database.");
         return;
     }
     await crawler.run(startUrls);

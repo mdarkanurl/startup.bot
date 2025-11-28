@@ -1,6 +1,11 @@
 import axios from "axios";
 import { Startup } from "../../../interfaces/ycombinator-types";
 import { MongoDB } from "../../../db";
+import { logger } from "../../../winston";
+
+const childLogger = logger.child({
+  file_path: "collect-startups-info/ycombinator.ts",
+});
 
 // Return array of startups
 const startups = async (URL: string): Promise<Startup[]> => {
@@ -49,16 +54,16 @@ const fetchYCombinatorStartups = async (data: any) => {
     // Save the data to MongoDB
     try {
       await MongoDB.YCStartup.insertMany(startups, { ordered: false });
-      console.log("Inserted successfully (duplicates skipped)");
+      childLogger.info("Inserted successfully (duplicates skipped)");
     } catch (err: any) {
       if (err.writeErrors) {
-        console.log(`${err.writeErrors.length} duplicates ignored`);
+        childLogger.error(`${err.writeErrors.length} duplicates ignored`);
       } else {
-        console.error(err);
+        childLogger.error(err);
       }
     }
   } catch (error) {
-    console.error("Error fetching startups:", error);
+    childLogger.error(`Error fetching startups: ${error}`);
   }
 };
 
