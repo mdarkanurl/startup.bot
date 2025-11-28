@@ -3,7 +3,7 @@ import { ApiError, GoogleGenAI } from "@google/genai";
 import { ai_generated_startup_summary, tweets } from "../../../db/schema";
 import { aiUtils } from "../../../utils/ai-utils";
 import { eq } from "drizzle-orm";
-import { promptForGenerateTweet } from "./prompt";
+import { promptForGenerateTweet } from "./helper/prompt";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
