@@ -21,6 +21,7 @@ export async function generateBlog() {
         });
 
         if (!startups) return console.log("No unused startup summaries found.");
+        if(startups.summary.length <= 5) return console.log("Not enough summaries to generate blog");
 
         // Generate blog using AI
         const prompt = promptForGenerateBlog(startups.summary);
@@ -44,7 +45,7 @@ export async function generateBlog() {
 
                 console.log("Generated Blog:", res.text);
 
-                // Check blogs for format by AI
+                // Check blog's format by AI
                 const resLLM = await checkBlogsFormatAndGenerateTitle(res.text);
 
                 if(!resLLM) return console.log("Invalid blog format");
@@ -64,7 +65,7 @@ export async function generateBlog() {
 
                 console.log("Marked startup summaries as used.");
                 return res.text;
-            } catch (error: any) {
+            } catch (error) {
                 
                 if (error instanceof ApiError) {
                     attempts++;
