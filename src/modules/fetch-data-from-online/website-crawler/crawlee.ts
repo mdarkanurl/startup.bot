@@ -4,6 +4,7 @@ import { fetchDataFromMongoDB } from "./get-data-from-mongo";
 import "dotenv/config";
 import { db } from "../../../connection";
 import { Tables } from "../../../db";
+import { normalizeUrl, removeREFParams } from './regex';
 
 const excludedPatterns = [
     'privacy', 'terms', 'login', 'signup', 'register',
@@ -13,27 +14,6 @@ const excludedPatterns = [
 let startUrls: any;
 const visited = new Set<string>();
 let finalDomain: string | null = null;
-
-export function normalizeUrl(url: string): string {
-    try {
-        const u = new URL(url.toLowerCase());
-
-        u.search = "";
-        u.hash = "";
-
-        // normalize hostname
-        u.hostname = u.hostname.replace(/^www\./, "");
-
-        // remove trailing slash unless root
-        if (u.pathname !== "/") {
-            u.pathname = u.pathname.replace(/\/$/, "");
-        }
-
-        return u.toString();
-    } catch {
-        return url.toLowerCase().trim();
-    }
-};
 
 const crawler = new PlaywrightCrawler({
     launchContext: {
@@ -111,7 +91,7 @@ const crawler = new PlaywrightCrawler({
             const result = await db
                 .insert(Tables.web_page_data)
                 .values({
-                    url: request.loadedUrl,
+                    url: removeREFParams(request.loadedUrl),
                     title: finalTitle,
                     description: summary || "",
                     text,
@@ -119,9 +99,11 @@ const crawler = new PlaywrightCrawler({
                 })
                 .returning();
 
+            visited.add(removeREFParams(request.loadedUrl));
+
             console.log('Saved to DB with ID:', result[0]);
-        } catch (error: any) {
-            log.error(`Failed to save data for ${request.loadedUrl}: ${error.message}`);
+        } catch (error) {
+            log.error(`Failed to save data: ${error}`);
             return;
         }
 
