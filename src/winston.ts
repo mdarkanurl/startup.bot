@@ -34,7 +34,8 @@ const logger = createLogger({
   transports: [
     fileRotateTransportForError,
     fileRotateTransportForInfo,
-    new LogtailTransport(logtail)
+    new LogtailTransport(logtail),
+    new transports.Console()
   ],
   exceptionHandlers: [
     new transports.File({
