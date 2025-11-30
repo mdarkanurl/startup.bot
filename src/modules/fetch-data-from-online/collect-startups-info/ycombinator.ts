@@ -1,11 +1,21 @@
 import axios from "axios";
-import { Startup } from "../../../interfaces/ycombinator-types";
 import { MongoDB } from "../../../db";
 import { logger } from "../../../winston";
 
 const childLogger = logger.child({
   file_path: "collect-startups-info/ycombinator.ts",
 });
+
+type Startup = {
+    startupID: number
+    name: string
+    website: string
+    description: string
+    VC_firm: "YCombinator" // literal type (only this value allowed)
+    services: string | undefined
+    founder_names: string[] | undefined
+    foundedAt: string
+}
 
 // Return array of startups
 const startups = async (URL: string): Promise<Startup[]> => {
