@@ -5,6 +5,7 @@ import { aiUtils } from "../../../utils/ai-utils";
 import { eq } from "drizzle-orm";
 import { promptForGenerateTweet } from "./helper/prompt";
 import { logger } from "../../../winston";
+import { checkIsTweetUnder280Characters } from "./helper/check-is-tweet-under-280-characters";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
@@ -47,29 +48,18 @@ export async function generateTweet() {
                 });
 
                 let tweet = res.text as string;
-                
+
                 if (!tweet) {
                     childLogger.info("No tweet generated.");
                     return;
                 }
 
                 // Check tweet length
-                if (tweet.length > 280) {
-                    childLogger.info(`Generated tweet exceeds 280 characters (${tweet.length}). Removing hashtags and regenerating...`);
-    
-                    // Remove hashtags and retry
-                    tweet = tweet.replace(/#\w+/g, '').trim();
+                const regeneratedTweet = await checkIsTweetUnder280Characters(googleGenAI, tweet);
 
-                    if (tweet.length <= 280) {
-                        childLogger.info(`Tweet is now within limit after removing hashtags (${tweet.length}).`);
-                        break;
-                    }
+                if(!regeneratedTweet) return childLogger.info(`Check tweet size function return null`);
 
-                    attempts++;
-                    await aiUtils.delay(delay);
-                    continue;
-                }
-
+                tweet = regeneratedTweet;
                 childLogger.info(`Generated Tweet: ${tweet}`);
 
                 // Save tweet to DB
@@ -91,8 +81,6 @@ export async function generateTweet() {
                 
                 if (error instanceof ApiError) {
                     attempts++;
-
-                    
 
                     if(error.status === 503) {
                         childLogger.warning(
