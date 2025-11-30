@@ -3,8 +3,13 @@ import 'dotenv/config';
 import { generateSummaryOfPages } from "./generate-summary-of-pages";
 import { ai_generated_startup_summary, web_page_data } from "../../../db/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "../../../winston";
 
 const CHUNK_SIZE = Number(process.env.CHUNK_SIZE) || 5;
+const childLogger = logger.child({
+    file_path: "startups/generate-startups-summary.ts",
+})
+
 
 export async function generateSummaryOfStartups() {
 
@@ -32,7 +37,7 @@ export async function generateSummaryOfStartups() {
     });
 
     if(pages.length === 0) {
-        console.log("No website crawling page found in the DB.");
+        childLogger.info("No website crawled page found in the DB.");
         return;
     }
 
@@ -42,24 +47,24 @@ export async function generateSummaryOfStartups() {
     for (let i = 0; i < pages.length; i += CHUNK_SIZE) {
         const chunk = pages.slice(i, i + CHUNK_SIZE);
 
-        console.log(`Summarizing pages ${i + 1} to ${i + chunk.length}...`);
+        childLogger.info(`Summarizing pages ${i + 1} to ${i + chunk.length}...`);
         const res = await generateSummaryOfPages(...chunk);
 
         if (res) summaries.push(res);
     }
 
-    console.log("Summaries generated:", summaries);
+    childLogger.info(`Summaries generated: ${summaries}`);
 
     try {
         // Save summaries to DB
-        const saveSummary = await db.insert(ai_generated_startup_summary).values({
+        await db.insert(ai_generated_startup_summary).values({
             summary: summaries,
             startupId: pages[0].startupId
         });
 
-        console.log("Summaries saved to DB:", saveSummary);
+        childLogger.info("Summaries saved to DB");
     } catch (error) {
-        console.error("Error saving summaries to DB:", error);
+        childLogger.error(`Error from saving summaries to DB: ${error}`);
     }
 
     try {
@@ -68,9 +73,9 @@ export async function generateSummaryOfStartups() {
             .set({ isUsed: true })
             .where(eq(web_page_data.startupId, pages[0].startupId));
 
-        console.log("Pages isUsed is updated in database");
+        childLogger.info("Marked pages as used in DB");
     } catch (error) {
-        console.error("Error updating pages in database:", error);
+        childLogger.error(`Error from marking pages as used in DB: ${error}`);
     }
 
     return summaries;

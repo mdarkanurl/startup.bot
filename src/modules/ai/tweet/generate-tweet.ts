@@ -4,11 +4,16 @@ import { ai_generated_startup_summary, tweets } from "../../../db/schema";
 import { aiUtils } from "../../../utils/ai-utils";
 import { eq } from "drizzle-orm";
 import { promptForGenerateTweet } from "./helper/prompt";
+import { logger } from "../../../winston";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 const googleGenAI = new GoogleGenAI({
     apiKey: GEMINI_API_KEY,
+});
+
+const childLogger = logger.child({
+    file_path: "tweet/generate-tweet.ts",
 });
 
 export async function generateTweet() {
@@ -20,7 +25,7 @@ export async function generateTweet() {
         });
 
         if(!startups) {
-            console.log("No startup summaries found in DB.");
+            childLogger.info("No startup summaries found in DB.");
             return;
         }
 
@@ -42,19 +47,19 @@ export async function generateTweet() {
                 }) as any;
 
                 if (!res.text) {
-                    console.log("No tweet generated.");
+                    childLogger.info("No tweet generated.");
                     return;
                 }
 
                 // Check tweet length
                 if (res.text.length > 280) {
-                    console.log(`Generated tweet exceeds 280 characters (${res.text.length}). Removing hashtags and regenerating...`);
+                    childLogger.info(`Generated tweet exceeds 280 characters (${res.text.length}). Removing hashtags and regenerating...`);
     
                     // Remove hashtags and retry
                     res.text = res.text.replace(/#\w+/g, '').trim();
 
                     if (res.text.length <= 280) {
-                        console.log(`Tweet is now within limit after removing hashtags (${res.text.length}).`);
+                        childLogger.info(`Tweet is now within limit after removing hashtags (${res.text.length}).`);
                         break;
                     }
 
@@ -63,7 +68,7 @@ export async function generateTweet() {
                     continue;
                 }
 
-                console.log("Generated Tweet:", res.text);
+                childLogger.info(`Generated Tweet: ${res.text}`);
 
                 // Save tweet to DB
                 await db.insert(tweets).values({
@@ -71,14 +76,14 @@ export async function generateTweet() {
                     tweet: res.text,
                 });
 
-                console.log("Tweet saved to Database");
+                childLogger.info("Tweet saved to Database");
 
                 // Mark the summaries as used
                 await db.update(ai_generated_startup_summary)
                     .set({ isUsedForTweets: true })
                     .where(eq(ai_generated_startup_summary.startupId, startups.startupId));
 
-                console.log("Marked startup summaries as used.");
+                childLogger.info("Marked startup summaries as used.");
                 return res.text;
             } catch (error) {
                 
@@ -88,24 +93,24 @@ export async function generateTweet() {
                     
 
                     if(error.status === 503) {
-                        console.log(
+                        childLogger.warning(
                             `Model overloaded (503). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`
                         );
                         aiUtils.delay(delay);
                     }
 
                     if(error.status === 429) {
-                        console.log(`Rate limit hit (429). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`);
+                        childLogger.warning(`Rate limit hit (429). Retrying in ${delay / 1000}s... [Attempt ${attempts}/${maxAttempts}]`);
                         aiUtils.delay(delay);
                     }
                 } else {
-                    throw error;
+                    childLogger.error(`Error from generating tweet: ${error}`);
                 }
             }
         }
 
-        console.error("Failed after multiple retries (model still overloaded).");
+        childLogger.error("Failed after multiple retries (model still overloaded).");
     } catch (error) {
-        console.error("Error fetching startup summaries:", error);
+        childLogger.error(`Error fetching startup summaries: ${error}`);
     }
 }

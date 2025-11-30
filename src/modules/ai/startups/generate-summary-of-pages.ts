@@ -1,9 +1,14 @@
 import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
 import { aiUtils } from '../../../utils';
+import { logger } from "../../../winston";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const DELAY_MS = 30000; // 30 seconds
+
+const childLogger = logger.child({
+    file_path: "startups/generate-summary-of-pages.ts",
+});
 
 const googleGenAI = new GoogleGenAI({
     apiKey: GEMINI_API_KEY,
@@ -26,8 +31,8 @@ const models = [
 ];
 
 export async function generateSummaryOfPages(...pages: PageData[]): Promise<string | null | undefined> {
-    console.log(`Generating summary for ${pages.length} pages...`);
-    pages.forEach((p, idx) => console.log(`${idx + 1}: ${p.title}`));
+    childLogger.info(`Generating summary for ${pages.length} pages...`);
+    pages.forEach((p, idx) => childLogger.info(`${idx + 1}: ${p.title}`));
 
     const formattedInput = pages
         .map(
@@ -54,28 +59,28 @@ export async function generateSummaryOfPages(...pages: PageData[]): Promise<stri
         const model = models[modelIndex];
 
         try {
-            console.log(`Using model: ${model}`);
+            childLogger.info(`Using model: ${model}`);
             const res = await googleGenAI.models.generateContent({
                 model: model,
                 contents: prompt,
                 config: {
                     systemInstruction: "You are an AI that writes clear summaries.",
                     thinkingConfig: {
-                        thinkingBudget: 0, // Disables thinking
+                        thinkingBudget: 0,
                     }
                 }
             });
 
             const text = res?.text || "No text returned.";
-            console.log(`Success with ${model}`);
+            childLogger.info(`Success with ${model}`);
             await aiUtils.delay(DELAY_MS);
             return text;
         } catch (error: any) {
-            console.error(`Error with ${model}:`, error?.message);
+            childLogger.error(`Error with ${model}:`, error);
 
             // Check if rate limit error
             if (error?.status === 429 || /rate/i.test(error?.message)) {
-                console.warn(`Rate limit hit for ${model}, switching to next model...`);
+                childLogger.warning(`Rate limit hit for ${model}, switching to next model...`);
                 modelIndex = (modelIndex + 1) % models.length;
                 await aiUtils.delay(DELAY_MS);
                 continue;

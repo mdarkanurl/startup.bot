@@ -3,9 +3,14 @@ import "dotenv/config";
 import { db } from "../../../connection";
 import { blogs } from "../../../db/schema";
 import { eq } from "drizzle-orm";
+import { logger } from "../../../winston";
 
 const apiKey = process.env.DEVTO_API_KEY || "";
 const baseUrl = process.env.DEVTO_BASE_URL || "https://dev.to/api";
+
+const childLogger = logger.child({
+    file_path: "blog/post-blog.ts",
+});
 
 export async function postBlog() {
   try {
@@ -15,7 +20,7 @@ export async function postBlog() {
     });
 
     if (!blog) {
-      console.log("No unused blog found.");
+      childLogger.info("No unused blog found.");
       return;
     }
 
@@ -39,17 +44,17 @@ export async function postBlog() {
       }
     );
 
-    console.log("Article posted:", postRes.data.url);
+    childLogger.info(`Article posted: ${postRes.data.url}`);
 
     /** 7. Mark the blog as used */
     await db.update(blogs)
       .set({ isUsed: true })
       .where(eq(blogs.id, blog.id));
 
-    console.log("Blog marked as used.");
+    childLogger.info("Blog marked as used.");
 
     return postRes.data;
     } catch (error: any) {
-      console.error("Error posting blog:", error);
+      childLogger.error(`Error posting blog: ${error}`);
   }
 }
