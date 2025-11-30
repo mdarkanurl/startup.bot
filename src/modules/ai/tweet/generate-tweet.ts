@@ -44,22 +44,24 @@ export async function generateTweet() {
                     config: {
                         systemInstruction: "You are an AI that writes tweet under 280 characters.",
                     },
-                }) as any;
+                });
 
-                if (!res.text) {
+                let tweet = res.text as string;
+                
+                if (!tweet) {
                     childLogger.info("No tweet generated.");
                     return;
                 }
 
                 // Check tweet length
-                if (res.text.length > 280) {
-                    childLogger.info(`Generated tweet exceeds 280 characters (${res.text.length}). Removing hashtags and regenerating...`);
+                if (tweet.length > 280) {
+                    childLogger.info(`Generated tweet exceeds 280 characters (${tweet.length}). Removing hashtags and regenerating...`);
     
                     // Remove hashtags and retry
-                    res.text = res.text.replace(/#\w+/g, '').trim();
+                    tweet = tweet.replace(/#\w+/g, '').trim();
 
-                    if (res.text.length <= 280) {
-                        childLogger.info(`Tweet is now within limit after removing hashtags (${res.text.length}).`);
+                    if (tweet.length <= 280) {
+                        childLogger.info(`Tweet is now within limit after removing hashtags (${tweet.length}).`);
                         break;
                     }
 
@@ -68,12 +70,12 @@ export async function generateTweet() {
                     continue;
                 }
 
-                childLogger.info(`Generated Tweet: ${res.text}`);
+                childLogger.info(`Generated Tweet: ${tweet}`);
 
                 // Save tweet to DB
                 await db.insert(tweets).values({
                     startupId: startups.startupId,
-                    tweet: res.text,
+                    tweet: tweet,
                 });
 
                 childLogger.info("Tweet saved to Database");
@@ -84,7 +86,7 @@ export async function generateTweet() {
                     .where(eq(ai_generated_startup_summary.startupId, startups.startupId));
 
                 childLogger.info("Marked startup summaries as used.");
-                return res.text;
+                return tweet;
             } catch (error) {
                 
                 if (error instanceof ApiError) {
