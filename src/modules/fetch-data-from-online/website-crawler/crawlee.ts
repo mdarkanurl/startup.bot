@@ -12,9 +12,9 @@ const childLogger = logger.child({
 });
 
 const excludedPatterns = [
-    'privacy', 'terms', 'login', 'signup', 'register',
-    'contact', 'support', 'faq', 'cookie', 'policy',
-    'help', 'careers', 'jobs', 'apply', 'hire'];
+    'privacy', 'terms', 'login', 'signup', 'signin', 'register',
+    'contact', 'support', 'faq', 'cookie', 'policy', 'sign-up',
+    'help', 'careers', 'jobs', 'apply', 'hire', 'feedback'];
 
 let startUrls: any;
 const visited = new Set<string>();
@@ -93,20 +93,23 @@ const crawler = new PlaywrightCrawler({
 
         // Save the data to the database
         try {
-            const result = await db
-                .insert(Tables.web_page_data)
-                .values({
-                    url: removeREFParams(request.loadedUrl),
-                    title: finalTitle,
-                    description: summary || "",
-                    text,
-                    startupId: request.userData.id,
-                })
-                .returning();
+            if(visited.has(removeREFParams(request.loadedUrl))) {
+                childLogger.info(`Alrealy crawled an saved in DB`);
+            } else {
+                await db
+                    .insert(Tables.web_page_data)
+                    .values({
+                        url: removeREFParams(request.loadedUrl),
+                        title: finalTitle,
+                        description: summary || "",
+                        text,
+                        startupId: request.userData.id,
+                    })
+                    .returning();
 
-            visited.add(removeREFParams(request.loadedUrl));
-
-            childLogger.info(`Saved crawled pages to DB`);
+                visited.add(removeREFParams(request.loadedUrl));
+                childLogger.info(`Saved crawled pages to DB`);
+            }
         } catch (error) {
             childLogger.error(`Failed to save data: ${error}`);
             return;
@@ -116,11 +119,13 @@ const crawler = new PlaywrightCrawler({
 
         // Detect final domain only once
         if (!finalDomain) finalDomain = currentOrigin;
+        console.log("Home page: ", finalDomain);
 
         const requestQueue = await RequestQueue.open();
 
-        if(normalizeUrl(request.loadedUrl) === normalizeUrl(finalDomain)) {
+        if(currentOrigin === finalDomain) {
             // Enqueue internal links
+            console.log("URL found in pages:", request.loadedUrl);
             await enqueueLinks({
             selector: 'a[href]',
             requestQueue,
@@ -202,6 +207,7 @@ async function getStartupDataFromWebsite() {
         return;
     }
     await crawler.run(startUrls);
+    finalDomain = null;
 }
 
 // getStartupDataFromWebsite();
