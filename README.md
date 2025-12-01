@@ -1,4 +1,4 @@
-# 🚀 Startup Collector & Poster Bot
+# 🤖 Startup Collector & Poster Bot
 
 ## 📖 Description
 This project is a bot that automatically discovers startups online, gathers detailed information, and shares it with the community. It helps tech enthusiasts stay updated on new ventures by posting informative content on Dev.to and X (Twitter).
