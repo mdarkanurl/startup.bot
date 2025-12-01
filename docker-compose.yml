@@ -30,7 +30,7 @@ services:
       X_ACCESS_TOKEN_SECRET: add_your_access_secret_token
       DEVTO_API_KEY: add_your_dev.to_api_key
       DEVTO_BASE_URL: https://dev.to/api
-      BEARER_TOKEN: add_your_dev.to_bearer_token
+      BEARER_TOKEN: add_your_product_hunt_bearer_token
       PRODUCT_HUNT_API_URL: https://api.producthunt.com/v2/api/graphql
       BETTER_STACK_SOURCE_TOKEN: add_your_better_stack_source_token
       BETTER_STACK_ENDPOINT: https://s1609300.eu-nbg-2.betterstackdata.com
