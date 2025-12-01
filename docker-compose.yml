@@ -21,18 +21,18 @@ services:
       MAX_REQUESTS: 100
       GEMINI_API_KEY: AIzaSyAYYinQjXQloPcZUreVcxMLvusBZ3Fuxgs
       DELAY_MS: 30000
-      MONGODB_CONNECT_URL: mongodb+srv://mdarkanurl:arkan10@startups.mox54yz.mongodb.net/?retryWrites=true&w=majority&appName=startups
+      MONGODB_CONNECT_URL: add_you_MongoDB_url
       DATABASE_URL: postgres://postgres:postgres@postgres:5432/startupsFromAI
       X_POST_API_ENDPOINT: https://api.x.com/2/tweets
-      X_APP_KEY: 7HqUoUl8VYFRDEz41xMPNvraq
-      X_APP_SECRET: yvobOI3R9kwx7jfZ0WUdC7Jym9YIx63UhJR1aQ1gZsNplH12WR
-      X_ACCESS_TOKEN: 1565350160749989890-oN73nfBfBiqVfLDO7iVxADEyRsGNL5
-      X_ACCESS_TOKEN_SECRET: 6Ae5ah83CUcc7uvsEpK1EPslIHhrOdxEPyecpknXQXzZ1
-      DEVTO_API_KEY: Y5d96xLRThNVzhoCu7H7XBtC
+      X_APP_KEY: add_your_app_key
+      X_APP_SECRET: add_your_add_secret
+      X_ACCESS_TOKEN: add_your_access_token
+      X_ACCESS_TOKEN_SECRET: add_your_access_secret_token
+      DEVTO_API_KEY: add_your_dev.to_api_key
       DEVTO_BASE_URL: https://dev.to/api
-      BEARER_TOKEN: 2rRt8kBxmRwGAY3nlpN-nWBuRKG6A8SckE3r-snBWSo
+      BEARER_TOKEN: add_your_dev.to_bearer_token
       PRODUCT_HUNT_API_URL: https://api.producthunt.com/v2/api/graphql
-      BETTER_STACK_SOURCE_TOKEN: tfJa3fo2wjwZSGHKyR841Zvx
+      BETTER_STACK_SOURCE_TOKEN: add_your_better_stack_source_token
       BETTER_STACK_ENDPOINT: https://s1609300.eu-nbg-2.betterstackdata.com
     command: sh -c "pnpm run db:migrate && node dist/src/index.js"
     depends_on:
