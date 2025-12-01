@@ -4,7 +4,7 @@
 This project is a bot that automatically discovers startups online, gathers detailed information, and shares it with the community. It helps tech enthusiasts stay updated on new ventures by posting informative content on Dev.to and X (Twitter).
 
 ## ✨ Features
-- 🔹 **AI Startup Discovery** – Fetch Product Hunt api to identify emerging startups.
+- 🔹 **AI Startup Discovery** – Fetch data from Product Hunt via api to identify emerging startups.
 - 🔹 **Website Crawling** – Visits startup websites to gather detailed info.
 - 🔹 **Content Generation** – Automatically writes tweets and blogs about startups via LLM.
 - 🔹 **Content Posting** – Automatically pots tweets and blogs on X (Twitter), Dev.to via api.
