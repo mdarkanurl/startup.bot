@@ -55,7 +55,7 @@ async function fetchTodayYesterdayPosts() {
         { headers: { "Content-Type": "application/json", "Authorization": `Bearer ${BEARER_TOKEN}` } }
       );
     } catch (error) {
-      childLogger.error(`Error: ${error}`);
+      childLogger.error(`Error in fetching data from Product Hunt: ${error}`);
       break;
     }
 
@@ -97,7 +97,7 @@ async function fetchTodayYesterdayPosts() {
       childLogger.error(`${err.writeErrors.length} duplicates ignored`);
       return;
     } else {
-      childLogger.error(`Error: ${err}`);
+      childLogger.error(`Error in saving data to MongoDB: ${err}`);
       return;
     }
   }
