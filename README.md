@@ -1,9 +1,9 @@
-# 🤖 Startup Collector & Poster Bot
+# Startup Collector & Poster Bot
 
-## 📖 Description
+## Description
 This project is a bot that automatically discovers startups online, gathers detailed information, and shares it with the community. It helps tech enthusiasts stay updated on new ventures by posting informative content on Dev.to and X (Twitter).
 
-## ✨ Features
+## Features
 - 🔹 **AI Startup Discovery** – Fetch data from Product Hunt via api to identify emerging startups.
 - 🔹 **Website Crawling** – Visits startup websites to gather detailed info.
 - 🔹 **Content Generation** – Automatically writes tweets and blogs about startups via LLM.
@@ -13,7 +13,7 @@ This project is a bot that automatically discovers startups online, gathers deta
 - 🔹 **Persistent Storage** – Stores collected data in PostgreSQL and MongoDB.
 - 🔹 **Optimization & Reliable** – Used Mozilla’s Readability algorithm to extract informative text and added robust error handling.
 
-## 🛠 Tech Stack
+## Tech Stack
 - Backend: Node.js, TypeScript
 - Database: PostgreSQL, MongoDB, Drizzle (ORM)
 - Crawle: Crawlee, PlaywrightCrawler
@@ -22,7 +22,7 @@ This project is a bot that automatically discovers startups online, gathers deta
 - Logging & Monitoring: Winston, Better Stack
 - Containerization: Docker
 
-## ⚙️ Setup Instructions
+## Setup Instructions
 1. Clone the repository:  
    ```bash
    git clone <repo-url>
@@ -41,9 +41,9 @@ This project is a bot that automatically discovers startups online, gathers deta
     ```
 5. Logs will be available in the configured Winston/Better Stack outputs as well as in the console.
 
-## 🤝 Contributing
+## Contributing
 Contributions, issues, and feature requests are welcome!
 If you want to contribute to Startups from AI, please follow the guidelines outlined in the [contributing.md](contributing.md) file.
 
-## 📄 License
+## License
 MIT License
